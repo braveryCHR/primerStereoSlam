@@ -11,8 +11,28 @@
 
 namespace primerSlam {
 
+    /**
+     * Read stereo data from the dataset
+     *
+     */
     class DataLoader {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+        typedef shared_ptr<DataLoader> Ptr;
+        DataLoader(const string & datasetDir);
 
+        bool Init();
+
+        Frame::Ptr nextFrame();
+
+        Camera::Ptr getCamera(int cameraId) const {
+            return cameras_.at(cameraId);
+        };
+
+    private:
+        string datasetDir;
+        int currentImageIndex_ = 0;
+        vector<Camera::Ptr> cameras_;
     };
 }
 

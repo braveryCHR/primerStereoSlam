@@ -10,7 +10,13 @@
 
 namespace primerSlam {
     class Frame {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+        typedef shared_ptr<Frame> Ptr;
 
+        cv::Mat leftImg_, rightImg_;
+
+        static shared_ptr<Frame> createFrame();
     };
 }
 #endif //PRIMERSTEREOSLAM_FRAME_H

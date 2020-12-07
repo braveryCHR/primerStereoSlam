@@ -30,9 +30,16 @@
 typedef Sophus::SE3d SE3;
 typedef Sophus::SO3d SO3;
 
+
+typedef Eigen::Matrix<double, 3, 3> Mat33;
+typedef Eigen::Matrix<double, 3, 1> Vec3d;
+typedef Eigen::Matrix<double, 2, 1> Vec2d;
+
 // for cv
 #include <opencv2/core/core.hpp>
 
 using cv::Mat;
+using namespace std;
+#include "glog/logging.h"
 
 #endif //PRIMERSTEREOSLAM_TOTALINCLUDE_H
