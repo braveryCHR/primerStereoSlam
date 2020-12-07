@@ -17,6 +17,7 @@ using namespace std;
 int main() {
     primerSlam::Tracking a;
     primerSlam::LocalMapping b;
+    cout << "New test for jjp branch!" << endl;
     cout << " Good bye!!! " << endl;
     return 0;
 }

@@ -24,15 +24,22 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 // for Sophus
-#include <sophus/se3.h>
-#include <sophus/so3.h>
+#include <sophus/se3.hpp>
+#include <sophus/so3.hpp>
 
-typedef Sophus::SE3 SE3;
-typedef Sophus::SO3 SO3;
+typedef Sophus::SE3d SE3;
+typedef Sophus::SO3d SO3;
+
+
+typedef Eigen::Matrix<double, 3, 3> Mat33;
+typedef Eigen::Matrix<double, 3, 1> Vec3d;
+typedef Eigen::Matrix<double, 2, 1> Vec2d;
 
 // for cv
 #include <opencv2/core/core.hpp>
 
 using cv::Mat;
+using namespace std;
+#include "glog/logging.h"
 
 #endif //PRIMERSTEREOSLAM_TOTALINCLUDE_H
