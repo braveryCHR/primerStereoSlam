@@ -20,15 +20,15 @@ namespace primerSlam {
         pos_ = pos;
     }
 
-    void MapPoint::addObservation(shared_ptr<Feature> feat) {
+    void MapPoint::addObservation(const shared_ptr<Feature> &feat) {
         unique_lock<mutex> lock(data_mutex_);
         observations_.push_back(feat);
         observed_times_ += 1;
     }
 
-    void MapPoint::removeObservation(shared_ptr<Feature> feat) {
+    void MapPoint::removeObservation(const shared_ptr<Feature> &feat) {
         unique_lock<mutex> lock(data_mutex_);
-        for (const auto &iter = observations_.begin();
+        for (auto iter = observations_.begin();
              iter != observations_.end(); ++iter) {
             if (iter->lock() == feat) {
                 observations_.erase(iter);
@@ -46,10 +46,10 @@ namespace primerSlam {
 
     MapPoint::Ptr MapPoint::createNewMapPoint() {
         static long factory_id = 0;
-        MapPoint::Ptr new_mappoint(new MapPoint());
-        new_mappoint->id_ = factory_id;
+        MapPoint::Ptr new_mapPoint(new MapPoint());
+        new_mapPoint->id_ = factory_id;
         factory_id += 1;
-        return new_mappoint;
+        return new_mapPoint;
     }
 }
 
