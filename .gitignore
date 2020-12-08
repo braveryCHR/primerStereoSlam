@@ -1,2 +1,5 @@
 data
 cmake-build-debug
+lib
+bin
+include/totalInclude.h

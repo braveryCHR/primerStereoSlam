@@ -19,19 +19,19 @@ namespace primerSlam {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         typedef shared_ptr<DataLoader> Ptr;
-        DataLoader(const string & datasetDir);
+
+        //explicit 指定它是默认的构造函数，不可用于转换构造函数
+        explicit DataLoader(string dataset_dir);
 
         bool Init();
 
         Frame::Ptr nextFrame();
 
-        Camera::Ptr getCamera(int cameraId) const {
-            return cameras_.at(cameraId);
-        };
+        Camera::Ptr getCamera(int cameraId) const;
 
     private:
-        string datasetDir;
-        int currentImageIndex_ = 0;
+        string dataset_dir_;
+        int current_image_index_ = 0;
         vector<Camera::Ptr> cameras_;
     };
 }

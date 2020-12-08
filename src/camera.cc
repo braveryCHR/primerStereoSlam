@@ -6,9 +6,7 @@
 
 namespace primerSlam {
 
-    Camera::Camera() {
-
-    }
+    Camera::Camera() = default;
 
     Vec3d Camera::world2camera(const Vec3d &p_w, const SE3 &T_c_w) {
         return pose_ * T_c_w * p_w;
