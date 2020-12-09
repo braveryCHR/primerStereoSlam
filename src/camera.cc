@@ -6,16 +6,14 @@
 
 namespace primerSlam {
 
-    Camera::Camera() {
-
-    }
+    Camera::Camera() = default;
 
     Vec3d Camera::world2camera(const Vec3d &p_w, const SE3 &T_c_w) {
         return pose_ * T_c_w * p_w;
     }
 
     Vec3d Camera::camera2world(const Vec3d &p_c, const SE3 &T_c_w) {
-        return T_c_w.inverse() * poseInv_ * p_c;
+        return T_c_w.inverse() * pose_inv_ * p_c;
     }
 
     Vec2d Camera::camera2pixel(const Vec3d &p_c) {
@@ -33,7 +31,7 @@ namespace primerSlam {
         );
     }
 
-    Vec3d Camera::world2pixel(const Vec3d &p_w, const SE3 &T_c_w) {
+    Vec2d Camera::world2pixel(const Vec3d &p_w, const SE3 &T_c_w) {
         return camera2pixel(world2camera(p_w, T_c_w));
     }
 

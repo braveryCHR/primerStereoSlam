@@ -13,18 +13,20 @@ using namespace std;
 namespace primerSlam {
     class Camera {
     public:
+        // Eigen库为了使用SSE加速，在内存上分配了128位的指针，涉及字节对齐问题，该问题在编译时不会报错，只在运行时报错
+        // 加上该宏定义可以避免出错
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         typedef shared_ptr<Camera> Ptr;
 
-        double fx_ = 0, fy_ = 0, cx_ = 0, cy_ = 0, baseline_ = 0;
-        SE3 pose_; // extrinsic, from stereo camera to single camera
-        SE3 poseInv_; // inverse of extrinsic
+        double fx_ = 0, fy_ = 0, cx_ = 0, cy_ = 0, baseline_ = 0; // 基线代表双目距离
+        SE3 pose_; // extrinsic, from stereo camera to single camera !!
+        SE3 pose_inv_; // inverse of extrinsic
 
         Camera();
 
         Camera(double fx, double fy, double cx, double cy, double baseline, const SE3 &pose)
-                :fx_(fx), fy_(fy), cx_(cx), cy_(cy), baseline_(baseline), pose_(pose){
-            poseInv_ = pose_.inverse();
+                : fx_(fx), fy_(fy), cx_(cx), cy_(cy), baseline_(baseline), pose_(pose) {
+            pose_inv_ = pose_.inverse();
         };
 
         SE3 pose() const {
@@ -47,7 +49,7 @@ namespace primerSlam {
 
         Vec3d pixel2world(const Vec2d &p_p, const SE3 &T_c_w, double depth = 1);
 
-        Vec3d world2pixel(const Vec3d &p_w, const SE3 &T_c_w);
+        Vec2d world2pixel(const Vec3d &p_w, const SE3 &T_c_w);
 
     };
 }
