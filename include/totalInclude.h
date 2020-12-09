@@ -28,6 +28,8 @@
 #include <sophus/so3.h>
 // for cv
 #include <opencv2/core/core.hpp>
+#include <opencv2/features2d.hpp>
+// for log
 #include <glog/logging.h>
 
 typedef Sophus::SE3 SE3;
@@ -38,6 +40,11 @@ typedef Eigen::Matrix<double, 3, 3> Mat33;
 typedef Eigen::Matrix<double, 3, 1> Vec3d;
 typedef Eigen::Matrix<double, 2, 1> Vec2d;
 
+
+#define MAX_FLOAT 3e38
+#define MIN_FLOAT -3e38
+#define MAX_INT 2147483640
+#define MIN_INT -2147483640
 
 using cv::Mat;
 using namespace std;

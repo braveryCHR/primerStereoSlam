@@ -7,11 +7,15 @@
 
 #include "camera.h"
 #include "totalInclude.h"
+#include "feature.h"
+
 
 namespace primerSlam {
-    class Featrue;
+
+    class MapPoint;
 
     class Frame {
+
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         typedef shared_ptr<Frame> Ptr;
@@ -22,11 +26,11 @@ namespace primerSlam {
         unsigned long keyframe_id_ = 0;
         bool is_keyframe_ = false;
         double time_stamp_ = 0.0;
-        SE3 pose_;
+        SE3 pose_;  // T_c_w
         mutex pose_mutex_;
         cv::Mat left_image_, right_image_;
 
-        vector<shared_ptr<Featrue>> left_features_, right_features_;
+        vector<shared_ptr<Feature>> left_features_, right_features_;
 
         Frame() = default;
 

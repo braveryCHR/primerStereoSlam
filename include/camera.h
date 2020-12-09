@@ -20,13 +20,13 @@ namespace primerSlam {
 
         double fx_ = 0, fy_ = 0, cx_ = 0, cy_ = 0, baseline_ = 0; // 基线代表双目距离
         SE3 pose_; // extrinsic, from stereo camera to single camera !!
-        SE3 poseInv_; // inverse of extrinsic
+        SE3 pose_inv_; // inverse of extrinsic
 
         Camera();
 
         Camera(double fx, double fy, double cx, double cy, double baseline, const SE3 &pose)
                 : fx_(fx), fy_(fy), cx_(cx), cy_(cy), baseline_(baseline), pose_(pose) {
-            poseInv_ = pose_.inverse();
+            pose_inv_ = pose_.inverse();
         };
 
         SE3 pose() const {
@@ -49,7 +49,7 @@ namespace primerSlam {
 
         Vec3d pixel2world(const Vec2d &p_p, const SE3 &T_c_w, double depth = 1);
 
-        Vec3d world2pixel(const Vec3d &p_w, const SE3 &T_c_w);
+        Vec2d world2pixel(const Vec3d &p_w, const SE3 &T_c_w);
 
     };
 }

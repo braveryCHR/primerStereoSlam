@@ -8,7 +8,7 @@
 #include "totalInclude.h"
 
 namespace primerSlam {
-    class frame;
+    class Frame;
 
     class Feature;
 
@@ -34,9 +34,9 @@ namespace primerSlam {
 
         void setPos(const Vec3d &pos);
 
-        void addObservation(const shared_ptr<Feature>& feat);
+        void addObservation(const shared_ptr<Feature> &feat);
 
-        void removeObservation(const shared_ptr<Feature>& feat);
+        void removeObservation(const shared_ptr<Feature> &feat);
 
         list<weak_ptr<Feature>> getObservation();
 
