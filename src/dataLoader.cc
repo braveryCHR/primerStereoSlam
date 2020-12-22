@@ -20,7 +20,7 @@ namespace primerSlam {
     };
 
     bool DataLoader::Init() {
-        ifstream fin(dataset_dir_ + "calib.txt");
+        ifstream fin(dataset_dir_ + "/calib.txt");
         if (!fin) {
             LOG(ERROR) << "Cannot find dataset: " << dataset_dir_ << "/calib.txt !";
             return false;
@@ -64,12 +64,12 @@ namespace primerSlam {
             return nullptr;
         }
 
-        cv::Mat left_image_resized, right_image_resized;
-        cv::resize(left_image, left_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
-        cv::resize(right_image, right_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
+//        cv::Mat left_image_resized, right_image_resized;
+//        cv::resize(left_image, left_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
+//        cv::resize(right_image, right_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
         auto new_frame = Frame::createFrame();
-        new_frame->leftImg_ = left_image_resized;
-        new_frame->rightImg_ = right_image_resized;
+        new_frame->left_image_ = left_image;
+        new_frame->right_image_ = right_image;
         current_image_index_++;
         return new_frame;
     }

@@ -20,8 +20,6 @@ namespace primerSlam {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         typedef shared_ptr<Frame> Ptr;
 
-        cv::Mat leftImg_, rightImg_;
-
         unsigned long id_ = 0;
         unsigned long keyframe_id_ = 0;
         bool is_keyframe_ = false;
