@@ -9,7 +9,8 @@ add_library(primerSlam SHARED
         map.cc
         mappoint.cc
         viewer.cc
-        visualOdometry.cc)
+        visualOdometry.cc
+        trackingOptimize.cc)
 
 target_link_libraries(primerSlam
         ${THIRD_PARTY_LIBS})

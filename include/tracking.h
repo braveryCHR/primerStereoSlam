@@ -66,6 +66,8 @@ namespace primerSlam {
 
         int estimateCurrentPose();
 
+        int estimateCurrentPosePnp();
+
         TrackingStatus status_ = TrackingStatus::INITING;
 
         Frame::Ptr current_frame_ = nullptr;
