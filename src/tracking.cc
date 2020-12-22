@@ -59,6 +59,7 @@ namespace primerSlam {
         showFeaturesMatchOneFrame(matches);
         filterORBFeaturesStereo(current_frame_->left_features_, current_frame_->right_features_, matches);
         buildInitMap();
+        status_ = TrackingStatus::TRACKING_GOOD;
         return true;
     }
 
@@ -66,6 +67,8 @@ namespace primerSlam {
         if (last_frame_) {
             current_frame_->setPose(relative_motion_ * last_frame_->pose());
         }
+        int feature_track_num = trackLastFrame();
+
         return false;
     }
 
@@ -185,6 +188,7 @@ namespace primerSlam {
         cv::drawMatches(last_frame_->left_image_, last_key, current_frame_->left_image_,
                         cur_key, matches, show_image);
         imshow("show Features Match Two Frame ", show_image);
+        cv::waitKey(-1);
         return true;
     }
 
@@ -261,6 +265,38 @@ namespace primerSlam {
     }
 
     int Tracking::trackLastFrame() {
+        vector<cv::KeyPoint> left_keypoints;
+        cv::Mat left_descriptors;
+        detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors);
+        storeORBFeatures(current_frame_->left_features_, left_keypoints, left_descriptors);
+        vector<cv::DMatch> matches;
+        Mat fundamental_matrix;
+        matchORBFeaturesRANSAC(matches, fundamental_matrix, last_frame_->left_features_,
+                               current_frame_->left_features_);
+        showFeaturesMatchTwoFrame(matches);
+
+        vector<shared_ptr<Feature>> tmp_feature(current_frame_->left_features_);
+        current_frame_->left_features_.clear();
+        for (const cv::DMatch &match:matches) {
+            Feature::Ptr feature = tmp_feature.at(match.trainIdx);
+            feature->map_point_ = last_frame_->left_features_.at(match.queryIdx)->map_point_;
+            current_frame_->left_features_.push_back(feature);
+        }
+        assert(current_frame_->left_features_.size() == matches.size());
+        return current_frame_->left_features_.size();
+    }
+
+    int Tracking::estimateCurrentPose() {
+        typedef g2o::BlockSolver_6_3 BlockSolverType;
+        typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
+                LinearSolverType;
+        auto solver = new g2o::OptimizationAlgorithmLevenberg(
+                g2o::make_unique<BlockSolverType>(
+                        g2o::make_unique<LinearSolverType>()));
+        g2o::SparseOptimizer optimizer;
+        optimizer.setAlgorithm(solver);
+
+        
         return 0;
     }
 }
