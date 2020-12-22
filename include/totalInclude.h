@@ -35,10 +35,12 @@
 typedef Sophus::SE3 SE3;
 typedef Sophus::SO3 SO3;
 
-
+typedef Eigen::Matrix<double, 4, 4> Mat44;
 typedef Eigen::Matrix<double, 3, 3> Mat33;
 typedef Eigen::Matrix<double, 3, 1> Vec3d;
 typedef Eigen::Matrix<double, 2, 1> Vec2d;
+typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatXX;
+typedef Eigen::Matrix<double, Eigen::Dynamic, 1> VecX;
 
 
 #define MAX_FLOAT 3e38
