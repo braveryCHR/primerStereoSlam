@@ -3,17 +3,15 @@
 //
 
 #include <memory>
-#include <opencv2/opencv.hpp>
-#include <utility>
+//#include <utility>
 
 #include "utils.h"
-#include "localMapping.h"
-#include "config.h"
+//#include "localMapping.h"
+//#include "config.h"
 #include "feature.h"
 #include "tracking.h"
-#include "g2oTypes.h"
 #include "map.h"
-#include "viewer.h"
+//#include "viewer.h"
 
 namespace primerSlam {
 
@@ -68,6 +66,8 @@ namespace primerSlam {
             current_frame_->setPose(relative_motion_ * last_frame_->pose());
         }
         int feature_track_num = trackLastFrame();
+        estimateCurrentPosePnp();
+        estimateCurrentPose();
 
         return false;
     }
@@ -286,17 +286,4 @@ namespace primerSlam {
         return current_frame_->left_features_.size();
     }
 
-    int Tracking::estimateCurrentPose() {
-        typedef g2o::BlockSolver_6_3 BlockSolverType;
-        typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
-                LinearSolverType;
-        auto solver = new g2o::OptimizationAlgorithmLevenberg(
-                g2o::make_unique<BlockSolverType>(
-                        g2o::make_unique<LinearSolverType>()));
-        g2o::SparseOptimizer optimizer;
-        optimizer.setAlgorithm(solver);
-
-        
-        return 0;
-    }
 }
