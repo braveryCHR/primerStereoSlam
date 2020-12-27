@@ -12,11 +12,10 @@ using namespace std;
 using namespace primerSlam;
 
 int main() {
-    //google::InitGoogleLogging("/home/bravery/CLionProjects/primerStereoSlam/data/log.txt");
     DataLoader::Ptr dataLoader =
-            std::make_shared<DataLoader>("/home/bravery/CLionProjects/primerStereoSlam/data/00");
+            std::make_shared<DataLoader>("/home/alanjiang/Dataset/00");
 
-    CHECK_EQ(dataLoader->Init(), true);
+    dataLoader->Init();
 
 //    cv::imshow("try", new_frame->left_image_);
 //    cv::waitKey(-1);
@@ -33,7 +32,7 @@ int main() {
         auto t2 = std::chrono::steady_clock::now();
         auto time_used =
                 std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-        LOG(INFO) << "VO cost time: " << time_used.count() << " seconds.";
+        cout << "VO cost time: " << time_used.count() << " seconds.";
     }
     return 0;
 }

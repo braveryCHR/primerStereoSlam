@@ -18,6 +18,7 @@ namespace primerSlam {
         pose_ = pose;
     }
 
+    // TODO WHY SET STATIC VAR = 0
     void Frame::setKeyFrame() {
         static long keyFrame_factory_id = 0;
         is_keyframe_ = true;

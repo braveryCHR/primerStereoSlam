@@ -17,7 +17,8 @@ namespace primerSlam {
 
     Tracking::Tracking() {
         feature_detector = cv::ORB::create(800);
-        feature_matcher = cv::BFMatcher::create(cv::NORM_L1);
+        // TODO cv::NORM_HAMMING
+        feature_matcher = cv::BFMatcher::create(cv::NORM_HAMMING);
         number_features_init_ = 50;//Config::Get<int>("number_features_init_");
         number_features_ = 150;//Config::Get<int>("number_features_");
     }
@@ -67,9 +68,9 @@ namespace primerSlam {
         }
         int feature_track_num = trackLastFrame();
         estimateCurrentPosePnp();
-        estimateCurrentPose();
-
-        return false;
+        // estimateCurrentPose();
+        relative_motion_ = current_frame_->pose() * last_frame_->pose().inverse();
+        return true;
     }
 
     bool Tracking::reset() {
@@ -84,7 +85,7 @@ namespace primerSlam {
         return false;
     }
 
-    bool Tracking::storeORBFeatures(vector<shared_ptr<Feature>> &stored_vector, const vector<cv::KeyPoint> &keypoints,
+    bool Tracking::storeORBFeatures(vector<shared_ptr<Feature >> &stored_vector, const vector<cv::KeyPoint> &keypoints,
                                     const cv::Mat &descriptors) {
         for (unsigned int i = 0; i < keypoints.size(); ++i) {
             stored_vector.push_back(
@@ -120,8 +121,8 @@ namespace primerSlam {
             if (dist < min_dist) min_dist = dist;
             if (dist > max_dist) max_dist = dist;
         }
-        LOG(INFO) << "match max dist : " << max_dist << endl;
-        LOG(INFO) << "match min dist : " << min_dist << endl;
+//        cout << "match max dist : " << max_dist << endl;
+//        cout << "match min dist : " << min_dist << endl;
 
         vector<cv::DMatch> good_matches;
 
@@ -130,7 +131,7 @@ namespace primerSlam {
                 good_matches.push_back(bf_match);
             }
         }
-        LOG(INFO) << "good match number : " << good_matches.size() << endl;
+        cout << "good match number : " << good_matches.size() << endl;
 
         Mat m_Fundamental;
         vector<uchar> m_RANSACStatus;
@@ -159,8 +160,8 @@ namespace primerSlam {
                 matches.push_back(good_matches.at(i));
             }
         }
-        LOG(INFO) << "final match number : " << matches.size() << endl;
-        LOG(INFO) << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
+        cout << "final match number : " << matches.size() << endl;
+        // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
     }
 
     TrackingStatus Tracking::getStatus() {
@@ -188,7 +189,8 @@ namespace primerSlam {
         cv::drawMatches(last_frame_->left_image_, last_key, current_frame_->left_image_,
                         cur_key, matches, show_image);
         imshow("show Features Match Two Frame ", show_image);
-        cv::waitKey(-1);
+
+        // cv::waitKey(-1);
         return true;
     }
 
@@ -204,7 +206,7 @@ namespace primerSlam {
         cv::drawMatches(current_frame_->left_image_, left_key, current_frame_->right_image_,
                         right_key, matches, show_image);
         imshow("show Features Match One Frame ", show_image);
-        cv::waitKey(-1);
+        // cv::waitKey(-1);
         return true;
     }
 
@@ -259,7 +261,7 @@ namespace primerSlam {
         current_frame_->setKeyFrame();
         map_->insertKeyFrame(current_frame_);
 
-        LOG(INFO) << "Initial map created with " << init_landmarks_count
+        cout << "Initial map created with " << init_landmarks_count
                   << " map points";
         return true;
     }
