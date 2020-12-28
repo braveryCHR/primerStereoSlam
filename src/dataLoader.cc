@@ -22,7 +22,7 @@ namespace primerSlam {
     bool DataLoader::Init() {
         ifstream fin(dataset_dir_ + "/calib.txt");
         if (!fin) {
-            LOG(ERROR) << "Cannot find dataset: " << dataset_dir_ << "/calib.txt !";
+            cout << "Cannot find dataset: " << dataset_dir_ << "/calib.txt !";
             return false;
         }
 
@@ -47,7 +47,7 @@ namespace primerSlam {
                     K(0, 0), K(1, 1), K(0, 2), K(1, 2),
                     t.norm(), SE3(SO3(), t)));
             cameras_.push_back(new_camera);
-            LOG(INFO) << "Camera " << i << " extrinsics: " << t.transpose();
+            cout << "Camera " << i << " extrinsics: " << t.transpose();
         }
         fin.close();
         current_image_index_ = 0;
@@ -56,17 +56,18 @@ namespace primerSlam {
 
     Frame::Ptr DataLoader::nextFrame() {
         boost::format fmt("%s/image_%d/%06d.png");
+        std::cout << "Now this is the " << current_image_index_ << " images!" << endl;
         cv::Mat left_image, right_image;
         left_image = cv::imread((fmt % dataset_dir_ % 0 % current_image_index_).str(), cv::IMREAD_GRAYSCALE);
         right_image = cv::imread((fmt % dataset_dir_ % 1 % current_image_index_).str(), cv::IMREAD_GRAYSCALE);
         if (left_image.data == nullptr || right_image.data == nullptr) {
-            LOG(WARNING) << "Cannot find images at index " << current_image_index_;
+            cout << "Cannot find images at index " << current_image_index_;
             return nullptr;
         }
 
-//        cv::Mat left_image_resized, right_image_resized;
-//        cv::resize(left_image, left_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
-//        cv::resize(right_image, right_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
+        cv::Mat left_image_resized, right_image_resized;
+        cv::resize(left_image, left_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
+        cv::resize(right_image, right_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
         auto new_frame = Frame::createFrame();
         new_frame->left_image_ = left_image;
         new_frame->right_image_ = right_image;

@@ -82,7 +82,7 @@ namespace primerSlam {
         else
             removed_frame = keyframes_[max_keyframe_id];
 
-        LOG(INFO) << "remove keyframe, id: " << removed_frame->id_ << " kf id: " << removed_frame->keyframe_id_;
+        cout << "remove keyframe, id: " << removed_frame->id_ << " kf id: " << removed_frame->keyframe_id_;
 
         active_keyframes_.erase(removed_frame->keyframe_id_);
 
@@ -110,7 +110,7 @@ namespace primerSlam {
                 ++iter;
             }
         }
-        LOG(INFO) << "remove " << landmark_removed_number << " landmarks";
+        cout << "remove " << landmark_removed_number << " landmarks";
 
     }
 }

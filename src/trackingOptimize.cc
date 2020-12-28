@@ -12,9 +12,15 @@
 #include "tracking.h"
 #include "g2oTypes.h"
 //#include "viewer.h"
+#include <eigen3/Eigen/Dense>
+#include <opencv2/core/eigen.hpp>
 
 namespace primerSlam {
     int Tracking::estimateCurrentPose() {
+
+        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+        cout << "Starting G2O optimize T: " << endl;
+
         typedef g2o::BlockSolver_6_3 BlockSolverType;
         typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
                 LinearSolverType;
@@ -23,6 +29,7 @@ namespace primerSlam {
                         g2o::make_unique<LinearSolverType>()));
         g2o::SparseOptimizer optimizer;
         optimizer.setAlgorithm(solver);
+        optimizer.setVerbose(true);
 
         // 设置边 只有一条
         auto *vertex_pose = new VertexPose();
@@ -57,13 +64,13 @@ namespace primerSlam {
         }
 
 
-        optimizer.setVerbose(false);
-        const double chi2_th = 5.991;
+        optimizer.setVerbose(true);
+        const double chi2_th = 2.5;
         int cnt_outlier = 0;
         for (int iteration = 0; iteration < 4; ++iteration) {
             vertex_pose->setEstimate(current_frame_->pose());
             optimizer.initializeOptimization();
-            optimizer.optimize(10);
+            optimizer.optimize(3);
             cnt_outlier = 0;
 
             // count the outliers
@@ -89,18 +96,25 @@ namespace primerSlam {
 
         current_frame_->setPose(vertex_pose->estimate());
 
-        LOG(INFO) << "Current Pose = \n" << current_frame_->pose().matrix();
+        cout << " G2O Method Current Pose = \n" << current_frame_->pose().matrix() << endl;
+        int count = 0;
 
         for (auto &feat : features) {
             if (feat->is_outlier_) {
                 feat->map_point_.reset();
                 feat->is_outlier_ = false;  // maybe we can still use it in future
             }
+            else{
+                count ++;
+            }
         }
+        cout << "g2o inliers : " << count << endl;
+        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
         return 0;
     }
 
     int Tracking::estimateCurrentPosePnp() {
+        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
         vector<cv::Point3f> p3ds;
         vector<cv::Point2f> p2ds;
         Mat33 K = left_camera_->K();
@@ -125,8 +139,32 @@ namespace primerSlam {
                            translation, false, 10000, 2, 0.99, inliers);
         cv::Mat R;
         cv::Rodrigues(r_pre, R);
-        cout << R << endl << endl;
-        cout << translation << endl;
+        cout << " PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
+        cout << "ransac inliers : " << inliers.size() << endl;
+        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+        Mat33 R_e;
+        Vec3d t_e;
+        cv::cv2eigen(R,R_e);
+        cv::cv2eigen(translation, t_e);
+        current_frame_->setPose(SE3(R_e, t_e));
+
+        for (int i= 0; i<inliers.size();i++)
+        {
+            cv::Point3f p3d = p3ds[inliers[i]];
+            cv::Point2f p2d = p2ds[inliers[i]];
+            Eigen::MatrixXd xyz(3, 1);
+            xyz << p3d.x, p3d.y, p3d.z;
+            Vec3d xyz_camera = K * (R_e * xyz + t_e);
+            double u = xyz_camera[0] / xyz_camera[2];
+            double v = xyz_camera[1] / xyz_camera[2];
+            cv::circle(current_frame_->left_image_, cv::Point2d(p2d.x, p2d.y), 8, cv::Scalar(0, 0, 255));
+            cv::circle(current_frame_->left_image_, cv::Point2d(u, v), 5, cv::Scalar(0, 255, 255));
+        }
+        cv::imshow("Reprojection: ", current_frame_->left_image_);
+        cv::waitKey(-1);
+
+//        cout << R << endl << endl;
+//        cout << translation << endl;
     }
 
 }
