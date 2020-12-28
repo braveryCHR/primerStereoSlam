@@ -17,7 +17,6 @@ namespace primerSlam {
 
     Tracking::Tracking() {
         feature_detector = cv::ORB::create(800);
-        // TODO cv::NORM_HAMMING
         feature_matcher = cv::BFMatcher::create(cv::NORM_HAMMING);
 //        number_features_init_ = 50;//Config::Get<int>("number_features_init_");
 //        number_features_ = 150;//Config::Get<int>("number_features_");

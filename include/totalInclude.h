@@ -38,6 +38,7 @@ typedef Sophus::SO3 SO3;
 
 typedef Eigen::Matrix<double, 4, 4> Mat44;
 typedef Eigen::Matrix<double, 3, 3> Mat33;
+typedef Eigen::Matrix<double, 2, 3> Mat22;
 typedef Eigen::Matrix<double, 3, 1> Vec3d;
 typedef Eigen::Matrix<double, 2, 1> Vec2d;
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatXX;

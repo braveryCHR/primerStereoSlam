@@ -16,6 +16,8 @@ namespace primerSlam {
         INITING, TRACKING_GOOD, TRACKING_BAD, LOST
     };
 
+    class Backend;
+    class Viewer;
 
 
     class Tracking {
@@ -31,6 +33,10 @@ namespace primerSlam {
         bool addFrame(Frame::Ptr frame);
 
         void setMap(const Map::Ptr &map);
+
+        void setBackend(std::shared_ptr<Backend> backend) {backend_ = backend;}
+
+        void setViewer(std::shared_ptr<Viewer> viewer) {viewer_ = viewer;}
 
         void setCamera(const Camera::Ptr &left_camera, const Camera::Ptr &right_camera);
 
@@ -91,6 +97,8 @@ namespace primerSlam {
         SE3 relative_motion_;  // 当前帧与上一帧的相对运动，用于估计当前帧pose初值
 
         Map::Ptr map_ = nullptr;
+        std::shared_ptr<Backend> backend_ = nullptr;
+        std::shared_ptr<Viewer> viewer_ = nullptr;
 
         cv::Ptr<cv::FeatureDetector> feature_detector;
         cv::Ptr<cv::BFMatcher> feature_matcher;
