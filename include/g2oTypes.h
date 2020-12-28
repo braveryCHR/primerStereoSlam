@@ -86,6 +86,33 @@ namespace primerSlam {
         Mat33 _K;
     };
 
+    class EdgeProjection
+: public g2o::BaseBinaryEdge<2, Vec2d, VertexPose, VertexP3d> {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+        EdgeProjection(const Mat33 &K, const SE3 & cam_ext) : _K(K) {
+            _cam_ext = cam_ext;
+        }
+
+        virtual void computeError() override {
+            const VertexPose *v0 = static_cast<VertexPose *>(_vertices[0]);
+            const VertexP3d * v1 = static_cast<VertexP3d *>(_vertices[1]);
+            SE3 T = v0->estimate();
+            Vec3d pos_pixel = _K * (_cam_ext * (T * v1->estimate()));
+            pos_pixel /= pos_pixel[2];
+            _error = _measurement - pos_pixel.head<2();
+        }
+
+        virtual bool read(std::istream & in) override {return true; };
+
+        virtual bool write(std::ostream & out) const override {return true; };
+
+    private:
+        Mat33 _K;
+        SE3 _cam_ext;
+    };
+
 }
 
 #endif //PRIMERSTEREOSLAM_G2OTYPES_H
