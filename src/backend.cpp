@@ -134,7 +134,7 @@ namespace primerSlam {
             if (inlier_ratio > 0.5) {
                 break;
             } else {
-                chi2_th *2;
+                chi2_th *= 2;
                 iteration ++;
             }
         }

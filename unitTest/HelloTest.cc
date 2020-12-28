@@ -6,7 +6,6 @@
 #include "camera.h"
 #include "totalInclude.h"
 #include "tracking.h"
-#include "localMapping.h"
 
 using namespace std;
 

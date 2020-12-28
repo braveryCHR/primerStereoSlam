@@ -6,7 +6,6 @@
 //#include <utility>
 
 #include "utils.h"
-//#include "localMapping.h"
 //#include "config.h"
 #include "feature.h"
 #include "tracking.h"
@@ -348,6 +347,4 @@ namespace primerSlam {
         cout << "status change from " << status2string[status_] << " to " << status2string[to_status] << endl;
         status_ = to_status;
     }
-
-
 }
