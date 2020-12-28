@@ -103,9 +103,8 @@ namespace primerSlam {
             if (feat->is_outlier_) {
                 feat->map_point_.reset();
                 feat->is_outlier_ = false;  // maybe we can still use it in future
-            }
-            else{
-                count ++;
+            } else {
+                count++;
             }
         }
         cout << "g2o inliers : " << count << endl;
@@ -135,6 +134,14 @@ namespace primerSlam {
         }
         cv::Mat r_pre, translation;
         vector<int> inliers;
+        // 根据内点设置feature属性
+        assert(inliers.size() < current_frame_->left_features_.size());
+        for (auto &feat:current_frame_->left_features_)
+            feat->is_outlier_ = true;
+        for (auto idx:inliers) {
+            current_frame_->left_features_.at(idx)->is_outlier_ = false;
+        }
+
         cv::solvePnPRansac(p3ds, p2ds, camera_K, Mat(), r_pre,
                            translation, false, 10000, 2, 0.99, inliers);
         cv::Mat R;
@@ -144,12 +151,11 @@ namespace primerSlam {
         cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
         Mat33 R_e;
         Vec3d t_e;
-        cv::cv2eigen(R,R_e);
+        cv::cv2eigen(R, R_e);
         cv::cv2eigen(translation, t_e);
         current_frame_->setPose(SE3(R_e, t_e));
 
-        for (int i= 0; i<inliers.size();i++)
-        {
+        for (size_t i = 0; i < inliers.size(); i++) {
             cv::Point3f p3d = p3ds[inliers[i]];
             cv::Point2f p2d = p2ds[inliers[i]];
             Eigen::MatrixXd xyz(3, 1);
@@ -167,4 +173,122 @@ namespace primerSlam {
 //        cout << translation << endl;
     }
 
+    bool Tracking::matchORBFeaturesRANSAC(vector<cv::DMatch> &matches, cv::Mat &fundamental_matrix,
+                                          const vector<shared_ptr<Feature>> &feature1,
+                                          const vector<shared_ptr<Feature>> &feature2) {
+        cv::Mat descriptors1, descriptors2;
+        concatMat(feature1, descriptors1);
+        concatMat(feature2, descriptors2);
+        vector<cv::DMatch> bf_matches;
+        feature_matcher->match(descriptors1, descriptors2, bf_matches, Mat());
+
+        double max_dist = 0;
+        double min_dist = 100;
+        //-- Quick calculation of max and min distances between keypoints
+        for (auto &bf_match : bf_matches) {
+            double dist = bf_match.distance;
+            if (dist < min_dist) min_dist = dist;
+            if (dist > max_dist) max_dist = dist;
+        }
+//        cout << "match max dist : " << max_dist << endl;
+//        cout << "match min dist : " << min_dist << endl;
+
+        vector<cv::DMatch> good_matches;
+
+        for (auto &bf_match : bf_matches) {
+            if (bf_match.distance < 0.8 * max_dist) {
+                good_matches.push_back(bf_match);
+            }
+        }
+        //cout << "good match number : " << good_matches.size() << endl;
+
+        Mat m_Fundamental;
+        vector<uchar> m_RANSACStatus;
+        Mat p1(good_matches.size(), 2, CV_32F);
+        Mat p2(good_matches.size(), 2, CV_32F);
+        // 把Keypoint转换为Mat
+        cv::Point2f pt;
+        for (unsigned int i = 0; i < good_matches.size(); i++) {
+            pt = feature1.at(good_matches[i].queryIdx)->position_.pt;
+            p1.at<float>(i, 0) = pt.x;
+            p1.at<float>(i, 1) = pt.y;
+
+            pt = feature2.at(good_matches[i].trainIdx)->position_.pt;
+            p2.at<float>(i, 0) = pt.x;
+            p2.at<float>(i, 1) = pt.y;
+        }
+
+        m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
+        // 计算野点个数
+        int outliner_count = 0;
+        for (unsigned int i = 0; i < good_matches.size(); i++) {
+            if (m_RANSACStatus[i] == 0) // 状态为0表示野点
+            {
+                outliner_count++;
+            } else {
+                matches.push_back(good_matches.at(i));
+            }
+        }
+        cout << "final match number : " << matches.size() << endl;
+        // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
+        return true;
+    }
+
+    bool Tracking::matchORBFeaturesRANSAC(vector<cv::DMatch> &matches, cv::Mat &fundamental_matrix,
+                                          const vector<cv::KeyPoint> &keypoints1, const Mat &descriptors1,
+                                          const vector<cv::KeyPoint> &keypoints2, const Mat &descriptors2) {
+        vector<cv::DMatch> bf_matches;
+        feature_matcher->match(descriptors1, descriptors2, bf_matches, Mat());
+
+        double max_dist = 0;
+        double min_dist = 100;
+        //-- Quick calculation of max and min distances between keypoints
+        for (auto &bf_match : bf_matches) {
+            double dist = bf_match.distance;
+            if (dist < min_dist) min_dist = dist;
+            if (dist > max_dist) max_dist = dist;
+        }
+//        cout << "match max dist : " << max_dist << endl;
+//        cout << "match min dist : " << min_dist << endl;
+
+        vector<cv::DMatch> good_matches;
+
+        for (auto &bf_match : bf_matches) {
+            if (bf_match.distance < 0.8 * max_dist) {
+                good_matches.push_back(bf_match);
+            }
+        }
+        cout << "good match number : " << good_matches.size() << endl;
+
+        Mat m_Fundamental;
+        vector<uchar> m_RANSACStatus;
+        Mat p1(good_matches.size(), 2, CV_32F);
+        Mat p2(good_matches.size(), 2, CV_32F);
+        // 把Keypoint转换为Mat
+        cv::Point2f pt;
+        for (unsigned int i = 0; i < good_matches.size(); i++) {
+            pt = keypoints1.at(good_matches[i].queryIdx).pt;
+            p1.at<float>(i, 0) = pt.x;
+            p1.at<float>(i, 1) = pt.y;
+
+            pt = keypoints2.at(good_matches[i].trainIdx).pt;
+            p2.at<float>(i, 0) = pt.x;
+            p2.at<float>(i, 1) = pt.y;
+        }
+
+        m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
+        // 计算野点个数
+        int outliner_count = 0;
+        for (unsigned int i = 0; i < good_matches.size(); i++) {
+            if (m_RANSACStatus[i] == 0) // 状态为0表示野点
+            {
+                outliner_count++;
+            } else {
+                matches.push_back(good_matches.at(i));
+            }
+        }
+        cout << "final match number : " << matches.size() << endl;
+        // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
+        return true;
+    }
 }

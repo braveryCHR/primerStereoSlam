@@ -19,8 +19,8 @@ namespace primerSlam {
         feature_detector = cv::ORB::create(800);
         // TODO cv::NORM_HAMMING
         feature_matcher = cv::BFMatcher::create(cv::NORM_HAMMING);
-        number_features_init_ = 50;//Config::Get<int>("number_features_init_");
-        number_features_ = 150;//Config::Get<int>("number_features_");
+//        number_features_init_ = 50;//Config::Get<int>("number_features_init_");
+//        number_features_ = 150;//Config::Get<int>("number_features_");
     }
 
     bool Tracking::addFrame(Frame::Ptr frame) {
@@ -45,8 +45,9 @@ namespace primerSlam {
         // 首先在左右两图都检测特征点,并且存储起来
         vector<cv::KeyPoint> left_keypoints, right_keypoints;
         cv::Mat left_descriptors, right_descriptors;
-        detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors);
-        detectORBFeatures(current_frame_->right_image_, right_keypoints, right_descriptors);
+        detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors, Mat());
+        detectORBFeatures(current_frame_->right_image_, right_keypoints, right_descriptors, Mat());
+        // 到此为止还是原始的未对应的feature，缺少mapPoint
         storeORBFeatures(current_frame_->left_features_, left_keypoints, left_descriptors);
         storeORBFeatures(current_frame_->right_features_, right_keypoints, right_descriptors);
         for (auto &feat:current_frame_->right_features_)
@@ -57,8 +58,9 @@ namespace primerSlam {
                                current_frame_->right_features_);
         showFeaturesMatchOneFrame(matches);
         filterORBFeaturesStereo(current_frame_->left_features_, current_frame_->right_features_, matches);
+        // 到此为止是左右下标匹配的feature，缺少mapPoint,outlier一律为false，因为已经匹配上了
         buildInitMap();
-        status_ = TrackingStatus::TRACKING_GOOD;
+        changeStatus(TrackingStatus::TRACKING_GOOD);
         return true;
     }
 
@@ -66,9 +68,18 @@ namespace primerSlam {
         if (last_frame_) {
             current_frame_->setPose(relative_motion_ * last_frame_->pose());
         }
-        int feature_track_num = trackLastFrame();
-        estimateCurrentPosePnp();
-        // estimateCurrentPose();
+        trackLastFrame();
+        num_feature_track_inliers = estimateCurrentPosePnp();
+
+        if (num_feature_track_inliers > num_features_tracking_good) {
+            changeStatus(TrackingStatus::TRACKING_GOOD);
+        } else if (num_feature_track_inliers > num_features_tracking_bad_) {
+            changeStatus(TrackingStatus::TRACKING_BAD);
+        } else {
+            changeStatus(TrackingStatus::LOST);
+        }
+        //estimateCurrentPose();
+        insertKeyFrame();
         relative_motion_ = current_frame_->pose() * last_frame_->pose().inverse();
         return true;
     }
@@ -77,12 +88,14 @@ namespace primerSlam {
         return false;
     }
 
-    bool Tracking::detectORBFeatures(const cv::Mat &detect_image, vector<cv::KeyPoint> &keypoints,
-                                     cv::Mat &descriptors) {
+    int Tracking::detectORBFeatures(const cv::Mat &detect_image, vector<cv::KeyPoint> &keypoints,
+                                    cv::Mat &descriptors, const cv::Mat &mask) {
 //        cv::imshow("show", detect_image);
 //        cv::waitKey(-1);
-        feature_detector->detectAndCompute(detect_image, Mat(), keypoints, descriptors);
-        return false;
+        feature_detector->detectAndCompute(detect_image, mask, keypoints, descriptors);
+
+        cout << "after detect: the image  has " << keypoints.size() << " new features " << endl;
+        return keypoints.size();
     }
 
     bool Tracking::storeORBFeatures(vector<shared_ptr<Feature >> &stored_vector, const vector<cv::KeyPoint> &keypoints,
@@ -104,65 +117,6 @@ namespace primerSlam {
         cv::vconcat(descriptors, out_descriptors);
     }
 
-    bool Tracking::matchORBFeaturesRANSAC(vector<cv::DMatch> &matches, cv::Mat &fundamental_matrix,
-                                          const vector<shared_ptr<Feature>> &feature1,
-                                          const vector<shared_ptr<Feature>> &feature2) {
-        cv::Mat descriptors1, descriptors2;
-        concatMat(feature1, descriptors1);
-        concatMat(feature2, descriptors2);
-        vector<cv::DMatch> bf_matches;
-        feature_matcher->match(descriptors1, descriptors2, bf_matches, Mat());
-
-        double max_dist = 0;
-        double min_dist = 100;
-        //-- Quick calculation of max and min distances between keypoints
-        for (auto &bf_match : bf_matches) {
-            double dist = bf_match.distance;
-            if (dist < min_dist) min_dist = dist;
-            if (dist > max_dist) max_dist = dist;
-        }
-//        cout << "match max dist : " << max_dist << endl;
-//        cout << "match min dist : " << min_dist << endl;
-
-        vector<cv::DMatch> good_matches;
-
-        for (auto &bf_match : bf_matches) {
-            if (bf_match.distance < 0.8 * max_dist) {
-                good_matches.push_back(bf_match);
-            }
-        }
-        cout << "good match number : " << good_matches.size() << endl;
-
-        Mat m_Fundamental;
-        vector<uchar> m_RANSACStatus;
-        Mat p1(good_matches.size(), 2, CV_32F);
-        Mat p2(good_matches.size(), 2, CV_32F);
-        // 把Keypoint转换为Mat
-        cv::Point2f pt;
-        for (unsigned int i = 0; i < good_matches.size(); i++) {
-            pt = feature1.at(good_matches[i].queryIdx)->position_.pt;
-            p1.at<float>(i, 0) = pt.x;
-            p1.at<float>(i, 1) = pt.y;
-
-            pt = feature2.at(good_matches[i].trainIdx)->position_.pt;
-            p2.at<float>(i, 0) = pt.x;
-            p2.at<float>(i, 1) = pt.y;
-        }
-
-        m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
-        // 计算野点个数
-        int outliner_count = 0;
-        for (unsigned int i = 0; i < good_matches.size(); i++) {
-            if (m_RANSACStatus[i] == 0) // 状态为0表示野点
-            {
-                outliner_count++;
-            } else {
-                matches.push_back(good_matches.at(i));
-            }
-        }
-        cout << "final match number : " << matches.size() << endl;
-        // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
-    }
 
     TrackingStatus Tracking::getStatus() {
         return status_;
@@ -225,12 +179,12 @@ namespace primerSlam {
 
     bool Tracking::buildInitMap() {
         vector<SE3> poses{left_camera_->pose(), right_camera_->pose()};
-        std::cout << poses.at(0).matrix() << std::endl << std::endl << poses.at(1).matrix() << std::endl << std::endl;
+        //std::cout << poses.at(0).matrix() << std::endl << std::endl << poses.at(1).matrix() << std::endl << std::endl;
         int init_landmarks_count = 0;
         //cout << current_frame_->left_features_.size() << endl;
         for (unsigned int i = 0; i < current_frame_->left_features_.size(); ++i) {
-            if (current_frame_->right_features_[i] == nullptr)
-                continue;
+            // 初始点对理论上都匹配上
+            assert(current_frame_->right_features_[i] != nullptr);
 //            cout << current_frame_->left_features_.at(i)->position_.pt << endl << endl
 //                 << current_frame_->right_features_.at(i)->position_.pt << endl << endl;
             vector<Vec3d> points{
@@ -246,10 +200,12 @@ namespace primerSlam {
             if (triangulation(poses, points, p_world)) {
                 if (p_world[2] > 0) {
                     //cout << "success" << endl << p_world << endl << endl;
+                    // 新建mapPoint，全都设置完毕
                     auto new_map_point = MapPoint::createNewMapPoint();
                     new_map_point->setPos(p_world);
                     new_map_point->addObservation(current_frame_->left_features_.at(i));
                     new_map_point->addObservation(current_frame_->right_features_.at(i));
+                    // feature的mapPoint设置完成，初始feature已经成功初始化
                     current_frame_->left_features_.at(i)->map_point_ = new_map_point;
                     current_frame_->right_features_.at(i)->map_point_ = new_map_point;
                     init_landmarks_count += 1;
@@ -262,15 +218,16 @@ namespace primerSlam {
         map_->insertKeyFrame(current_frame_);
 
         cout << "Initial map created with " << init_landmarks_count
-                  << " map points";
+             << " map points";
         return true;
     }
 
     int Tracking::trackLastFrame() {
         vector<cv::KeyPoint> left_keypoints;
         cv::Mat left_descriptors;
-        detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors);
+        detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors, Mat());
         storeORBFeatures(current_frame_->left_features_, left_keypoints, left_descriptors);
+        // 此时还是原始未对应的feature
         vector<cv::DMatch> matches;
         Mat fundamental_matrix;
         matchORBFeaturesRANSAC(matches, fundamental_matrix, last_frame_->left_features_,
@@ -287,5 +244,111 @@ namespace primerSlam {
         assert(current_frame_->left_features_.size() == matches.size());
         return current_frame_->left_features_.size();
     }
+
+    bool Tracking::insertKeyFrame() {
+        if (num_feature_track_inliers > num_features_needed_for_keyframe_) {
+            cout << "not need to be key frame" << endl;
+            return false;
+        }
+        current_frame_->setKeyFrame();
+        map_->insertKeyFrame(current_frame_);
+        cout << "set frame " << current_frame_->id_ << " as keyframe " << current_frame_->keyframe_id_ << endl;
+        setObservationForKeyFrame();
+
+        cv::Mat left_descriptors, right_descriptors;
+        vector<cv::KeyPoint> left_keypoints, right_keypoints;
+        // 检测新的特征点补充进去
+        // 当建立新的keyframe时，由于之前已经有了一些feature，提取feature时需要注意mask
+        cv::Mat mask(current_frame_->left_image_.size(), CV_8UC1, 255);
+        for (auto &feat:current_frame_->left_features_) {
+            cv::rectangle(mask, feat->position_.pt - cv::Point2f(5, 5),
+                          feat->position_.pt + cv::Point2f(5, 5), 0, CV_FILLED);
+        }
+        cout << "before detect: the image has " << current_frame_->left_features_.size() << " orb features" << endl;
+        detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors, mask);
+        detectORBFeatures(current_frame_->right_image_, right_keypoints, right_descriptors, Mat());
+        vector<cv::DMatch> matches;
+        Mat fundamental_matrix;
+        matchORBFeaturesRANSAC(matches, fundamental_matrix, left_keypoints, left_descriptors,
+                               right_keypoints, right_descriptors);
+        cout << "match " << matches.size() << " new features" << endl;
+
+        // 左图已经存在的feature没有右图对应点，所以直接放空指针
+        for (auto &feat:current_frame_->left_features_) {
+            current_frame_->right_features_.push_back(nullptr);
+        }
+        // 对于新找到的feature，将其存放
+        for (const cv::DMatch &match:matches) {
+            Feature::Ptr left_feature = std::make_shared<Feature>(
+                    current_frame_, left_keypoints.at(match.queryIdx), left_descriptors.row(match.queryIdx)
+            );
+            Feature::Ptr right_feature = std::make_shared<Feature>(
+                    current_frame_, right_keypoints.at(match.trainIdx), right_descriptors.row(match.trainIdx)
+            );
+            current_frame_->left_features_.push_back(left_feature);
+            current_frame_->right_features_.push_back(right_feature);
+        }
+        // 最后，建立新的地图点
+        triangulateNewPoints();
+        return true;
+    }
+
+    void Tracking::setObservationForKeyFrame() {
+        for (const auto &feat:current_frame_->left_features_) {
+            auto mp = feat->map_point_.lock();
+            if (mp) {
+                mp->addObservation(feat);
+            }
+        }
+    }
+
+    int Tracking::triangulateNewPoints() {
+        std::vector<SE3> poses{left_camera_->pose(), right_camera_->pose()};
+        SE3 current_pose_Twc = current_frame_->pose().inverse();
+        int cnt_triangulated_pts = 0;
+        for (size_t i = 0; i < current_frame_->left_features_.size(); ++i) {
+            if (current_frame_->left_features_[i]->map_point_.expired() &&
+                current_frame_->right_features_[i] != nullptr) {
+                // 左图的特征点没有关联地图点且存在右图匹配点(可以将)，尝试三角化
+                std::vector<Vec3d> points{
+                        left_camera_->pixel2camera(
+                                Vec2d(current_frame_->left_features_[i]->position_.pt.x,
+                                      current_frame_->left_features_[i]->position_.pt.y)),
+                        right_camera_->pixel2camera(
+                                Vec2d(current_frame_->right_features_[i]->position_.pt.x,
+                                      current_frame_->right_features_[i]->position_.pt.y))};
+                Vec3d pworld = Vec3d::Zero();
+
+                if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+                    auto new_map_point = MapPoint::createNewMapPoint();
+                    pworld = current_pose_Twc * pworld;
+                    new_map_point->setPos(pworld);
+                    new_map_point->addObservation(
+                            current_frame_->left_features_[i]);
+                    new_map_point->addObservation(
+                            current_frame_->right_features_[i]);
+
+                    current_frame_->left_features_[i]->map_point_ = new_map_point;
+                    current_frame_->right_features_[i]->map_point_ = new_map_point;
+                    map_->insertMapPoint(new_map_point);
+                    cnt_triangulated_pts++;
+                }
+            }
+        }
+        cout << "new landmarks: " << cnt_triangulated_pts << endl;
+        return cnt_triangulated_pts;
+    }
+
+    void Tracking::changeStatus(TrackingStatus to_status) {
+        map<TrackingStatus, string> status2string = {
+                {TrackingStatus::INITING,       "initing"},
+                {TrackingStatus::TRACKING_GOOD, "tracking_good"},
+                {TrackingStatus::TRACKING_BAD,  "tracking_bad"},
+                {TrackingStatus::LOST,          "lost"}
+        };
+        cout << "status change from " << status2string[status_] << " to " << status2string[to_status] << endl;
+        status_ = to_status;
+    }
+
 
 }

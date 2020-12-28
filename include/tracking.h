@@ -17,6 +17,7 @@ namespace primerSlam {
     };
 
 
+
     class Tracking {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -40,7 +41,8 @@ namespace primerSlam {
 
         bool reset();
 
-        bool detectORBFeatures(const Mat &detect_image, vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors);
+        int detectORBFeatures(const Mat &detect_image, vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors,
+                              const cv::Mat &mask);
 
         bool storeORBFeatures(vector<shared_ptr<Feature>> &stored_vector, const vector<cv::KeyPoint> &keypoints,
                               const cv::Mat &descriptors);
@@ -48,6 +50,10 @@ namespace primerSlam {
         bool matchORBFeaturesRANSAC(vector<cv::DMatch> &matches, cv::Mat &fundamental_matrix,
                                     const vector<shared_ptr<Feature>> &feature1,
                                     const vector<shared_ptr<Feature>> &feature2);
+
+        bool matchORBFeaturesRANSAC(vector<cv::DMatch> &matches, cv::Mat &fundamental_matrix,
+                                    const vector<cv::KeyPoint> &keypoints1, const Mat &descriptors1,
+                                    const vector<cv::KeyPoint> &keypoints2, const Mat &descriptors2);
 
         void concatMat(const vector<shared_ptr<Feature>> &in_feature, Mat &out_descriptors);
 
@@ -68,6 +74,14 @@ namespace primerSlam {
 
         int estimateCurrentPosePnp();
 
+        bool insertKeyFrame();
+
+        void setObservationForKeyFrame();
+
+        int triangulateNewPoints();
+
+        void changeStatus(TrackingStatus to_status);
+
         TrackingStatus status_ = TrackingStatus::INITING;
 
         Frame::Ptr current_frame_ = nullptr;
@@ -80,8 +94,16 @@ namespace primerSlam {
 
         cv::Ptr<cv::FeatureDetector> feature_detector;
         cv::Ptr<cv::BFMatcher> feature_matcher;
-        int number_features_init_ = 0;
-        int number_features_ = 0;
+        // 初始化需要得到的feature数目
+        int num_features_init_ = 200;
+        // 跟踪状态好至少需要的feature数目
+        int num_features_tracking_good = 80;
+        // 跟踪状态不好至少需要的feature数目
+        int num_features_tracking_bad_ = 40;
+        // 设置关键帧时需要的feature数目
+        int num_features_needed_for_keyframe_ = 80;
+        // 实际跟踪的内点个数
+        int num_feature_track_inliers = 0;
     };
 
 }
