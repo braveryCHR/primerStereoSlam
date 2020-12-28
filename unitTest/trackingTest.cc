@@ -13,7 +13,7 @@ using namespace primerSlam;
 
 int main() {
     DataLoader::Ptr dataLoader =
-            std::make_shared<DataLoader>("/home/alanjiang/Dataset/00");
+            std::make_shared<DataLoader>("/home/bravery/CLionProjects/primerStereoSlam/data/00");
 
     dataLoader->Init();
 
