@@ -17,7 +17,7 @@ namespace primerSlam {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         typedef std::shared_ptr<VisualOdometry> Ptr;
 
-        VisualOdometry(std::string & config_path);
+        explicit VisualOdometry(std::string & config_path);
 
         bool Init();
 

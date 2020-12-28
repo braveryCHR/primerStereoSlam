@@ -2,7 +2,6 @@ add_library(primerSlam SHARED
         camera.cc
         config.cc
         dataLoader.cc
-        feature.cc
         frame.cc
         tracking.cc
         map.cc

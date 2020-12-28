@@ -95,18 +95,18 @@ namespace primerSlam {
             _cam_ext = cam_ext;
         }
 
-        virtual void computeError() override {
+        void computeError() override {
             const VertexPose *v0 = static_cast<VertexPose *>(_vertices[0]);
             const VertexP3d * v1 = static_cast<VertexP3d *>(_vertices[1]);
-            SE3 T = v0->estimate();
+            const SE3& T = v0->estimate();
             Vec3d pos_pixel = _K * (_cam_ext * (T * v1->estimate()));
             pos_pixel /= pos_pixel[2];
             _error = _measurement - pos_pixel.head<2>();
         }
 
-        virtual bool read(std::istream & in) override {return true; };
+        bool read(std::istream & in) override {return true; };
 
-        virtual bool write(std::ostream & out) const override {return true; };
+        bool write(std::ostream & out) const override {return true; };
 
     private:
         Mat33 _K;
