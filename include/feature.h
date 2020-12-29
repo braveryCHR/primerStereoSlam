@@ -27,7 +27,7 @@ namespace primerSlam {
         weak_ptr<Frame> frame_;
         cv::KeyPoint position_;
         cv::Mat descriptor_;
-        weak_ptr<MapPoint> map_point_;
+        std::weak_ptr<MapPoint> map_point_;
 
         bool is_outlier_ = false;
         bool is_on_left_image_ = true;
@@ -36,7 +36,6 @@ namespace primerSlam {
 
         Feature(const shared_ptr<Frame> &frame, cv::KeyPoint kp, cv::Mat des)
                 : frame_(frame), position_(move(kp)), descriptor_(move(des)) {}
-
 
     };
 }

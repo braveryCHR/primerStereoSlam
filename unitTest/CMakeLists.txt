@@ -13,3 +13,9 @@ add_executable(trackingTest trackingTest.cc)
 target_link_libraries(trackingTest
         ${THIRD_PARTY_LIBS}
         primerSlam)
+
+
+add_executable(tracking_jjp tracking_jjp.cpp)
+target_link_libraries(tracking_jjp
+        ${THIRD_PARTY_LIBS}
+        primerSlam)

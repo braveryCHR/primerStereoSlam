@@ -7,6 +7,8 @@
 
 #include <pangolin/pangolin.h>
 #include <opencv2/opencv.hpp>
+#include "mappoint.h"
+#include "map.h"
 
 namespace primerSlam {
 
@@ -76,7 +78,7 @@ namespace primerSlam {
         for (std::size_t i = 0; i < current_frame_->left_features_.size(); ++i) {
             if (current_frame_->left_features_[i]->map_point_.lock()) {
                 auto feat = current_frame_->left_features_[i];
-                cv::circle(img_out, feat->position_.pt, 2, cv::Scalar(0, 250, 0), 2);
+                cv::circle(img_out, feat->position_.pt, 2, cv::Scalar(feat->map_point_.lock()->color[0], feat->map_point_.lock()->color[1], feat->map_point_.lock()->color[2]), 2);
             }
         }
         return img_out;
@@ -145,7 +147,8 @@ namespace primerSlam {
         glBegin(GL_POINTS);
         for (auto & landmark : active_landmarks_) {
             auto pos = landmark.second->pos();
-            glColor3f(red[0], red[1], red[2]);
+            // glColor3f(red[0], red[1], red[2]);
+            glColor3f(landmark.second->color[0] /255.0f, landmark.second->color[1]/255.0f, landmark.second->color[2]/255.0f);
             glVertex3d(pos[0], pos[1], pos[2]);
         }
         glEnd();
