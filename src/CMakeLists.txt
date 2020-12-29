@@ -9,6 +9,7 @@ add_library(primerSlam SHARED
         viewer.cc
         visualOdometry.cc
         trackingOptimize.cc
+        trackingDebug.cc
         backend.cpp)
 
 target_link_libraries(primerSlam

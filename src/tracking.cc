@@ -49,25 +49,32 @@ namespace primerSlam {
         storeORBFeatures(current_frame_->left_features_, left_keypoints, left_descriptors);
         storeORBFeatures(current_frame_->right_features_, right_keypoints, right_descriptors);
         for (auto &feat:current_frame_->right_features_)
-            feat->is_on_left_image_ = true;
+            feat->is_on_left_image_ = false;
         vector<cv::DMatch> matches;
         Mat fundamental_matrix;
         matchORBFeaturesRANSAC(matches, fundamental_matrix, current_frame_->left_features_,
                                current_frame_->right_features_);
-        showFeaturesMatchOneFrame(matches);
+        //showFeaturesMatchOneFrame(matches);
         filterORBFeaturesStereo(current_frame_->left_features_, current_frame_->right_features_, matches);
         // 到此为止是左右下标匹配的feature，缺少mapPoint,outlier一律为false，因为已经匹配上了
         buildInitMap();
         changeStatus(TrackingStatus::TRACKING_GOOD);
+        if (viewer_) {
+            viewer_->AddCurrentFrame(current_frame_);
+            viewer_->UpdateMap();
+        }
+//        checkTriangulate();
         return true;
     }
 
     bool Tracking::track() {
         if (last_frame_) {
             current_frame_->setPose(relative_motion_ * last_frame_->pose());
+            cout << "last frame with " << last_frame_->left_features_.size() << " features" << endl;
         }
         trackLastFrame();
         num_feature_track_inliers = estimateCurrentPosePnp();
+        cout << "tracking current frame with " << num_feature_track_inliers << " features" << endl;
 
         if (num_feature_track_inliers > num_features_tracking_good) {
             changeStatus(TrackingStatus::TRACKING_GOOD);
@@ -79,6 +86,9 @@ namespace primerSlam {
         //estimateCurrentPose();
         insertKeyFrame();
         relative_motion_ = current_frame_->pose() * last_frame_->pose().inverse();
+
+        if (viewer_)
+            viewer_->AddCurrentFrame(current_frame_);
         return true;
     }
 
@@ -141,8 +151,7 @@ namespace primerSlam {
         cv::drawMatches(last_frame_->left_image_, last_key, current_frame_->left_image_,
                         cur_key, matches, show_image);
         imshow("show Features Match Two Frame ", show_image);
-
-        // cv::waitKey(-1);
+        cv::waitKey(-1);
         return true;
     }
 
@@ -158,7 +167,7 @@ namespace primerSlam {
         cv::drawMatches(current_frame_->left_image_, left_key, current_frame_->right_image_,
                         right_key, matches, show_image);
         imshow("show Features Match One Frame ", show_image);
-        // cv::waitKey(-1);
+        cv::waitKey(-1);
         return true;
     }
 
@@ -216,7 +225,7 @@ namespace primerSlam {
         map_->insertKeyFrame(current_frame_);
 
         cout << "Initial map created with " << init_landmarks_count
-             << " map points";
+             << " map points" << endl;
         return true;
     }
 
@@ -230,7 +239,7 @@ namespace primerSlam {
         Mat fundamental_matrix;
         matchORBFeaturesRANSAC(matches, fundamental_matrix, last_frame_->left_features_,
                                current_frame_->left_features_);
-        showFeaturesMatchTwoFrame(matches);
+        //showFeaturesMatchTwoFrame(matches);
 
         vector<shared_ptr<Feature>> tmp_feature(current_frame_->left_features_);
         current_frame_->left_features_.clear();
@@ -257,12 +266,13 @@ namespace primerSlam {
         vector<cv::KeyPoint> left_keypoints, right_keypoints;
         // 检测新的特征点补充进去
         // 当建立新的keyframe时，由于之前已经有了一些feature，提取feature时需要注意mask
-        cv::Mat mask(current_frame_->left_image_.size(), CV_8UC1, 255);
-        for (auto &feat:current_frame_->left_features_) {
-            cv::rectangle(mask, feat->position_.pt - cv::Point2f(5, 5),
-                          feat->position_.pt + cv::Point2f(5, 5), 0, CV_FILLED);
-        }
+//        cv::Mat mask(current_frame_->left_image_.size(), CV_8UC1, 255);
+//        for (auto &feat:current_frame_->left_features_) {
+//            cv::rectangle(mask, feat->position_.pt - cv::Point2f(2, 2),
+//                          feat->position_.pt + cv::Point2f(2, 2), 0, CV_FILLED);
+//        }
         cout << "before detect: the image has " << current_frame_->left_features_.size() << " orb features" << endl;
+        cv::Mat mask;
         detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors, mask);
         detectORBFeatures(current_frame_->right_image_, right_keypoints, right_descriptors, Mat());
         vector<cv::DMatch> matches;
@@ -288,6 +298,10 @@ namespace primerSlam {
         }
         // 最后，建立新的地图点
         triangulateNewPoints();
+
+        if (viewer_)
+            viewer_->UpdateMap();
+
         return true;
     }
 

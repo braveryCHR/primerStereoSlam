@@ -74,7 +74,6 @@ namespace primerSlam {
                 min_keyframe_id = kf.first;
             }
         }
-
         const double min_dis_threshold = 0.2;
         Frame::Ptr removed_frame = nullptr;
         if (min_dis < min_dis_threshold)
@@ -82,11 +81,11 @@ namespace primerSlam {
         else
             removed_frame = keyframes_[max_keyframe_id];
 
-        cout << "remove keyframe, id: " << removed_frame->id_ << " kf id: " << removed_frame->keyframe_id_;
-
         active_keyframes_.erase(removed_frame->keyframe_id_);
 
         for (const auto &feat: removed_frame->left_features_) {
+            if (feat == nullptr)
+                continue;
             auto mp = feat->map_point_.lock();
             if (mp) {
                 mp->removeObservation(feat);
@@ -94,6 +93,8 @@ namespace primerSlam {
         }
 
         for (const auto &feat: removed_frame->right_features_) {
+            if (feat == nullptr)
+                continue;
             auto mp = feat->map_point_.lock();
             if (mp) {
                 mp->removeObservation(feat);
@@ -102,6 +103,7 @@ namespace primerSlam {
 
         // after remove the frame,count the mappoint observations and remove it if 0
         int landmark_removed_number = 0;
+
         for (auto iter = active_landmarks_.begin(); iter != active_landmarks_.end();) {
             if (iter->second->observed_times_ == 0) {
                 iter = active_landmarks_.erase(iter);
@@ -111,6 +113,5 @@ namespace primerSlam {
             }
         }
         cout << "remove " << landmark_removed_number << " landmarks";
-
     }
 }

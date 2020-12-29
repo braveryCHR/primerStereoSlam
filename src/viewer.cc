@@ -42,7 +42,7 @@ namespace primerSlam {
                 pangolin::ProjectionMatrix(1024, 768, 400, 400, 512, 384, 0.1, 1000),
                 pangolin::ModelViewLookAt(0, -5, -10, 0, 0, 0, 0, -1, 0)
         );
-        pangolin::View & vis_display = pangolin::CreateDisplay().SetBounds(0, 1, 0, 1, -1024.0f/768.0f)
+        pangolin::View &vis_display = pangolin::CreateDisplay().SetBounds(0, 1, 0, 1, -1024.0f / 768.0f)
                 .SetHandler(new pangolin::Handler3D(vis_camera));
 
         const float blue[3] = {0, 0, 1};
@@ -90,6 +90,7 @@ namespace primerSlam {
 
     void Viewer::DrawFrame(Frame::Ptr frame, const float *color) {
         SE3 Twc = frame->pose().inverse();
+        // cout << "current frame pose:" << endl << Twc.matrix() << endl;
         const float sz = 1.0;
         const int line_width = 2.0;
         const float fx = 400;
@@ -101,8 +102,8 @@ namespace primerSlam {
 
         glPushMatrix();
 
-        Sophus::Matrix4f  m = Twc.matrix().template cast<float>();
-        glMultMatrixf((GLfloat*)m.data());
+        Sophus::Matrix4f m = Twc.matrix().template cast<float>();
+        glMultMatrixf((GLfloat *) m.data());
         if (color == nullptr) {
             glColor3f(1, 0, 0);
         } else {
@@ -138,12 +139,12 @@ namespace primerSlam {
 
     void Viewer::DrawMapPoints() {
         const float red[3] = {1.0, 0, 0};
-        for (auto & kf : active_keyframes_) {
+        for (auto &kf : active_keyframes_) {
             DrawFrame(kf.second, red);
         }
         glPointSize(2);
         glBegin(GL_POINTS);
-        for (auto & landmark : active_landmarks_) {
+        for (auto &landmark : active_landmarks_) {
             auto pos = landmark.second->pos();
             glColor3f(red[0], red[1], red[2]);
             glVertex3d(pos[0], pos[1], pos[2]);

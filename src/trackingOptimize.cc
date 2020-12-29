@@ -153,20 +153,21 @@ namespace primerSlam {
         cv::cv2eigen(R, R_e);
         cv::cv2eigen(translation, t_e);
         current_frame_->setPose(SE3(R_e, t_e));
+        return inliers.size();
 
-        for (size_t i = 0; i < inliers.size(); i++) {
-            cv::Point3f p3d = p3ds[inliers[i]];
-            cv::Point2f p2d = p2ds[inliers[i]];
-            Eigen::MatrixXd xyz(3, 1);
-            xyz << p3d.x, p3d.y, p3d.z;
-            Vec3d xyz_camera = K * (R_e * xyz + t_e);
-            double u = xyz_camera[0] / xyz_camera[2];
-            double v = xyz_camera[1] / xyz_camera[2];
-            cv::circle(current_frame_->left_image_, cv::Point2d(p2d.x, p2d.y), 8, cv::Scalar(0, 0, 255));
-            cv::circle(current_frame_->left_image_, cv::Point2d(u, v), 5, cv::Scalar(0, 255, 255));
-        }
-        cv::imshow("Reprojection: ", current_frame_->left_image_);
-        cv::waitKey(-1);
+//        for (size_t i = 0; i < inliers.size(); i++) {
+//            cv::Point3f p3d = p3ds[inliers[i]];
+//            cv::Point2f p2d = p2ds[inliers[i]];
+//            Eigen::MatrixXd xyz(3, 1);
+//            xyz << p3d.x, p3d.y, p3d.z;
+//            Vec3d xyz_camera = K * (R_e * xyz + t_e);
+//            double u = xyz_camera[0] / xyz_camera[2];
+//            double v = xyz_camera[1] / xyz_camera[2];
+//            cv::circle(current_frame_->left_image_, cv::Point2d(p2d.x, p2d.y), 8, cv::Scalar(0, 0, 255));
+//            cv::circle(current_frame_->left_image_, cv::Point2d(u, v), 5, cv::Scalar(0, 255, 255));
+//        }
+//        cv::imshow("Reprojection: ", current_frame_->left_image_);
+//        cv::waitKey(-1);
 
 //        cout << R << endl << endl;
 //        cout << translation << endl;

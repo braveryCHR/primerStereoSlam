@@ -47,7 +47,7 @@ namespace primerSlam {
                     K(0, 0), K(1, 1), K(0, 2), K(1, 2),
                     t.norm(), SE3(SO3(), t)));
             cameras_.push_back(new_camera);
-            cout << "Camera " << i << " extrinsics: " << t.transpose();
+            cout << "Camera " << i << " extrinsics: " << t.transpose() << endl;
         }
         fin.close();
         current_image_index_ = 0;
@@ -69,8 +69,8 @@ namespace primerSlam {
         cv::resize(left_image, left_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
         cv::resize(right_image, right_image_resized, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST);
         auto new_frame = Frame::createFrame();
-        new_frame->left_image_ = left_image;
-        new_frame->right_image_ = right_image;
+        new_frame->left_image_ = left_image_resized;
+        new_frame->right_image_ = right_image_resized;
         current_image_index_++;
         return new_frame;
     }
