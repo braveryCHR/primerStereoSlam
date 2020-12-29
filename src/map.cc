@@ -87,13 +87,17 @@ namespace primerSlam {
         active_keyframes_.erase(removed_frame->keyframe_id_);
 
         for (const auto &feat: removed_frame->left_features_) {
-            auto mp = feat->map_point_.lock();
+            if (feat == nullptr)
+                continue;
+             auto mp = feat->map_point_.lock();
             if (mp) {
                 mp->removeObservation(feat);
             }
         }
 
         for (const auto &feat: removed_frame->right_features_) {
+            if (feat == nullptr)
+                continue;
             auto mp = feat->map_point_.lock();
             if (mp) {
                 mp->removeObservation(feat);

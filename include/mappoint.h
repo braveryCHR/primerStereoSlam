@@ -23,6 +23,7 @@ namespace primerSlam {
         Vec3d pos_ = Vec3d::Zero();
         // to avoid thread conflict
         mutex data_mutex_;
+        Vec3d color = Vec3d::Zero();
         int observed_times_ = 0;
         list<weak_ptr<Feature>> observations_;
 

@@ -101,7 +101,7 @@ namespace primerSlam {
             SE3 T = v0->estimate();
             Vec3d pos_pixel = _K * (_cam_ext * (T * v1->estimate()));
             pos_pixel /= pos_pixel[2];
-            _error = _measurement - pos_pixel.head<2();
+            _error = _measurement - pos_pixel.head<2>();
         }
 
         virtual bool read(std::istream & in) override {return true; };
