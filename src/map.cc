@@ -34,22 +34,22 @@ namespace primerSlam {
     }
 
     Map::KeyFrameType Map::getAllKeyFrames() {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         return keyframes_;
     }
 
     Map::LandmarksType Map::getAllMapPoints() {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         return landmarks_;
     }
 
     Map::KeyFrameType Map::getActiveKeyFrames() {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         return active_keyframes_;
     }
 
     Map::LandmarksType Map::getActiveMapPoints() {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         return active_landmarks_;
     }
 
@@ -82,14 +82,14 @@ namespace primerSlam {
         else
             removed_frame = keyframes_[max_keyframe_id];
 
-        cout << "remove keyframe, id: " << removed_frame->id_ << " kf id: " << removed_frame->keyframe_id_;
+        cout << "Map remove keyframe, id: " << removed_frame->id_ << " kf id: " << removed_frame->keyframe_id_ << endl;
 
         active_keyframes_.erase(removed_frame->keyframe_id_);
 
         for (const auto &feat: removed_frame->left_features_) {
             if (feat == nullptr)
                 continue;
-             auto mp = feat->map_point_.lock();
+            auto mp = feat->map_point_.lock();
             if (mp) {
                 mp->removeObservation(feat);
             }
@@ -114,7 +114,7 @@ namespace primerSlam {
                 ++iter;
             }
         }
-        cout << "remove " << landmark_removed_number << " landmarks";
+        cout << "Map remove " << landmark_removed_number << " landmarks" << endl;
 
     }
 }

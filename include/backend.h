@@ -38,7 +38,7 @@ namespace primerSlam {
 
         std::shared_ptr<Map> map_;
         std::thread backend_thread_;
-        ::mutex data_mutex_;
+        std::mutex data_mutex_;
 
         std::condition_variable map_update_;
         std::atomic<bool> backend_running_{};

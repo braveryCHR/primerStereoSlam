@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
 project(primerStereoSlam)
 
+set(CMAKE_BUILD_TYPE RELEASE)
+
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -fopenmp -pthread")
+
 
 
 # find cmake file

@@ -26,6 +26,7 @@ int main(int argc, char **argv){
     tracking->setMap(map);
     tracking->setViewer(viewer);
     tracking->setCamera(dataloader->getCamera(0), dataloader->getCamera(1));
+    tracking->setBackend(backend);
 
     backend->SetCamera(dataloader->getCamera(0), dataloader->getCamera(1));
     backend->SetMap(map);
@@ -54,7 +55,7 @@ int main(int argc, char **argv){
         }
 
     }
-    // backend_->Stop();
+    backend->Stop();
     viewer->Close();
     std::cout << "VO is over !" << std::endl;
 

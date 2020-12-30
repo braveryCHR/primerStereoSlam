@@ -146,9 +146,9 @@ namespace primerSlam {
                            translation, false, 10000, 2, 0.99, inliers);
         cv::Mat R;
         cv::Rodrigues(r_pre, R);
-        cout << " PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
-        cout << "ransac inliers : " << inliers.size() << endl;
-        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+        cout << "PoseEstimate PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
+        cout << "PoseEstimate ransac inliers : " << inliers.size() << endl;
+        // cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
         Mat33 R_e;
         Vec3d t_e;
         cv::cv2eigen(R, R_e);
@@ -221,15 +221,20 @@ namespace primerSlam {
         m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
         // 计算野点个数
         int outliner_count = 0;
+               unordered_map<int, int> train_ids;
+
         for (unsigned int i = 0; i < good_matches.size(); i++) {
             if (m_RANSACStatus[i] == 0) // 状态为0表示野点
             {
                 outliner_count++;
-            } else {
+            } else if (train_ids.find(good_matches.at(i).trainIdx) == train_ids.end()){
                 matches.push_back(good_matches.at(i));
+                train_ids.insert(make_pair(good_matches.at(i).trainIdx, good_matches.at(i).queryIdx));
+            } else {
+                ;
             }
         }
-        cout << "final match number : " << matches.size() << endl;
+        cout << "RASNAC ORB final match number : " << matches.size() << endl;
         // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
         return true;
     }
@@ -258,7 +263,7 @@ namespace primerSlam {
                 good_matches.push_back(bf_match);
             }
         }
-        cout << "good match number : " << good_matches.size() << endl;
+        // cout << "good match number : " << good_matches.size() << endl;
 
         Mat m_Fundamental;
         vector<uchar> m_RANSACStatus;
@@ -279,15 +284,17 @@ namespace primerSlam {
         m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
         // 计算野点个数
         int outliner_count = 0;
+        unordered_map<int, int> train_ids;
         for (unsigned int i = 0; i < good_matches.size(); i++) {
             if (m_RANSACStatus[i] == 0) // 状态为0表示野点
             {
                 outliner_count++;
-            } else {
+            } else if (train_ids.find(good_matches.at(i).trainIdx) == train_ids.end()){
                 matches.push_back(good_matches.at(i));
-            }
+                train_ids.insert(make_pair(good_matches.at(i).trainIdx, good_matches.at(i).queryIdx));
+            }  else {;}
         }
-        cout << "final match number : " << matches.size() << endl;
+        cout << "RANSAC ORB final match number : " << matches.size() << endl;
         // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
         return true;
     }
