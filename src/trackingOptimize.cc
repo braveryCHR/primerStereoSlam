@@ -63,7 +63,7 @@ namespace primerSlam {
         }
 
 
-        optimizer.setVerbose(true);
+        optimizer.setVerbose(false);
         const double chi2_th = 2.5;
         int cnt_outlier = 0;
         for (int iteration = 0; iteration < 4; ++iteration) {
@@ -131,18 +131,19 @@ namespace primerSlam {
                                   feature->position_.pt.y);
             }
         }
+        cout << "pnp with " << p3ds.size() << " feature" << endl;
         cv::Mat r_pre, translation;
         vector<int> inliers;
         // 根据内点设置feature属性
         assert(inliers.size() < current_frame_->left_features_.size());
-        for (auto &feat:current_frame_->left_features_)
-            feat->is_outlier_ = true;
-        for (auto idx:inliers) {
-            current_frame_->left_features_.at(idx)->is_outlier_ = false;
-        }
+//        for (auto &feat:current_frame_->left_features_)
+//            feat->is_outlier_ = true;
+//        for (auto idx:inliers) {
+//            current_frame_->left_features_.at(idx)->is_outlier_ = false;
+//        }
 
         cv::solvePnPRansac(p3ds, p2ds, camera_K, Mat(), r_pre,
-                           translation, false, 10000, 2, 0.99, inliers);
+                           translation, false, 100000, 2, 0.99, inliers);
         cv::Mat R;
         cv::Rodrigues(r_pre, R);
         cout << " PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
@@ -258,7 +259,7 @@ namespace primerSlam {
                 good_matches.push_back(bf_match);
             }
         }
-        cout << "good match number : " << good_matches.size() << endl;
+        //cout << "good match number : " << good_matches.size() << endl;
 
         Mat m_Fundamental;
         vector<uchar> m_RANSACStatus;

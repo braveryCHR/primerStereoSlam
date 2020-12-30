@@ -17,11 +17,13 @@ namespace primerSlam {
     Tracking::Tracking() {
         feature_detector = cv::ORB::create(800);
         feature_matcher = cv::BFMatcher::create(cv::NORM_HAMMING);
+        cout << "tracking-----init" << endl;
 //        number_features_init_ = 50;//Config::Get<int>("number_features_init_");
 //        number_features_ = 150;//Config::Get<int>("number_features_");
     }
 
     bool Tracking::addFrame(Frame::Ptr frame) {
+        cout << "tracking-----addFrame id " << frame->id_ << endl;
         current_frame_ = frame;
         switch (status_) {
             case TrackingStatus::INITING:
@@ -40,10 +42,13 @@ namespace primerSlam {
     }
 
     bool Tracking::stereoInit() {
+        cout << "tracking-----stereoInit " << endl;
         // 首先在左右两图都检测特征点,并且存储起来
         vector<cv::KeyPoint> left_keypoints, right_keypoints;
         cv::Mat left_descriptors, right_descriptors;
+        cout << "detect left image ORB features" << endl;
         detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors, Mat());
+        cout << "detect right image ORB features" << endl;
         detectORBFeatures(current_frame_->right_image_, right_keypoints, right_descriptors, Mat());
         // 到此为止还是原始的未对应的feature，缺少mapPoint
         storeORBFeatures(current_frame_->left_features_, left_keypoints, left_descriptors);
@@ -52,14 +57,18 @@ namespace primerSlam {
             feat->is_on_left_image_ = false;
         vector<cv::DMatch> matches;
         Mat fundamental_matrix;
+        cout << "match left and right ORB feature" << endl;
         matchORBFeaturesRANSAC(matches, fundamental_matrix, current_frame_->left_features_,
                                current_frame_->right_features_);
         //showFeaturesMatchOneFrame(matches);
         filterORBFeaturesStereo(current_frame_->left_features_, current_frame_->right_features_, matches);
+
         // 到此为止是左右下标匹配的feature，缺少mapPoint,outlier一律为false，因为已经匹配上了
+        cout << "build init map" << endl;
         buildInitMap();
         changeStatus(TrackingStatus::TRACKING_GOOD);
         if (viewer_) {
+            cout << "update viewer" << endl;
             viewer_->AddCurrentFrame(current_frame_);
             viewer_->UpdateMap();
         }
@@ -68,13 +77,14 @@ namespace primerSlam {
     }
 
     bool Tracking::track() {
+        cout << "tracking-----track input frame " << endl;
         if (last_frame_) {
             current_frame_->setPose(relative_motion_ * last_frame_->pose());
-            cout << "last frame with " << last_frame_->left_features_.size() << " features" << endl;
         }
         trackLastFrame();
         num_feature_track_inliers = estimateCurrentPosePnp();
-        cout << "tracking current frame with " << num_feature_track_inliers << " features" << endl;
+        cout << "after PNP, track last frame with " << num_feature_track_inliers << " features" << endl;
+        //estimateCurrentPose();
 
         if (num_feature_track_inliers > num_features_tracking_good) {
             changeStatus(TrackingStatus::TRACKING_GOOD);
@@ -232,11 +242,13 @@ namespace primerSlam {
     int Tracking::trackLastFrame() {
         vector<cv::KeyPoint> left_keypoints;
         cv::Mat left_descriptors;
+        cout << "detect cur frame ORB features" << endl;
         detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors, Mat());
         storeORBFeatures(current_frame_->left_features_, left_keypoints, left_descriptors);
         // 此时还是原始未对应的feature
         vector<cv::DMatch> matches;
         Mat fundamental_matrix;
+        cout << "match cur left and last left images ORB feature" << endl;
         matchORBFeaturesRANSAC(matches, fundamental_matrix, last_frame_->left_features_,
                                current_frame_->left_features_);
         //showFeaturesMatchTwoFrame(matches);
@@ -273,7 +285,9 @@ namespace primerSlam {
 //        }
         cout << "before detect: the image has " << current_frame_->left_features_.size() << " orb features" << endl;
         cv::Mat mask;
+        cout << "detect left image ORB features" << endl;
         detectORBFeatures(current_frame_->left_image_, left_keypoints, left_descriptors, mask);
+        cout << "detect right image ORB features" << endl;
         detectORBFeatures(current_frame_->right_image_, right_keypoints, right_descriptors, Mat());
         vector<cv::DMatch> matches;
         Mat fundamental_matrix;
