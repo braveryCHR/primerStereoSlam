@@ -251,7 +251,7 @@ namespace primerSlam {
         cout << "match cur left and last left images ORB feature" << endl;
         matchORBFeaturesRANSAC(matches, fundamental_matrix, last_frame_->left_features_,
                                current_frame_->left_features_);
-        //showFeaturesMatchTwoFrame(matches);
+        showFeaturesMatchTwoFrame(matches);
 
         vector<shared_ptr<Feature>> tmp_feature(current_frame_->left_features_);
         current_frame_->left_features_.clear();
@@ -360,6 +360,9 @@ namespace primerSlam {
                 Vec3d pworld = Vec3d::Zero();
 
                 if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+//                    cout << points[0].transpose() << "  " << points[1].transpose() << " " << endl;
+//                    cout << pworld.transpose() << endl;
+
                     auto new_map_point = MapPoint::createNewMapPoint();
                     pworld = current_pose_Twc * pworld;
                     new_map_point->setPos(pworld);
