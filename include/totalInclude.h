@@ -23,6 +23,7 @@
 // define the commonly included file to avoid a long include list
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <Eigen/Dense>
 // for Sophus
 #include <sophus/se3.h>
 #include <sophus/so3.h>

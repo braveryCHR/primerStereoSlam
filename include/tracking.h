@@ -91,6 +91,8 @@ namespace primerSlam {
 
         void checkTriangulate();
 
+        void F2Rt(const Mat& F);
+
         TrackingStatus status_ = TrackingStatus::INITING;
 
         Frame::Ptr current_frame_ = nullptr;

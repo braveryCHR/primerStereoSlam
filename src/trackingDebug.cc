@@ -4,6 +4,8 @@
 #include "tracking.h"
 #include "mappoint.h"
 #include "camera.h"
+#include "totalInclude.h"
+#include <opencv2/core/eigen.hpp>
 
 
 namespace primerSlam {
@@ -24,5 +26,49 @@ namespace primerSlam {
 
         cv::imshow("checkTriangulate", image);
         cv::waitKey(-1);
+    }
+
+    void Tracking::F2Rt(const Mat &F) {
+        Eigen::Matrix3d F_matrix;
+        cv::cv2eigen(F, F_matrix);
+
+        Eigen::Matrix3d E_matrix = left_camera_->K().transpose() * F_matrix * left_camera_->K();
+
+        // 待计算的R,t
+        Eigen::Matrix3d R;
+        Eigen::Vector3d t;
+
+        // SVD and fix sigular values
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd(E_matrix, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+        const auto &U = svd.matrixU();
+        const auto &V = svd.matrixV();
+        const auto &A = svd.singularValues().matrix();
+
+        double ave = (A(0, 0) + A(1, 0)) / 2.0;
+        Eigen::Matrix3d realA;
+        realA << ave, 0, 0, 0, ave, 0, 0, 0, 0;
+
+        Eigen::Matrix3d t_wedge1;
+        Eigen::Matrix3d t_wedge2;
+
+        Eigen::Matrix3d R1;
+        Eigen::Matrix3d R2;
+
+        Eigen::Matrix3d Rz1, Rz2;
+        Rz1 << 0, -1, 0, 1, 0, 0, 0, 0, 1;
+        Rz2 << 0, 1, 0, -1, 0, 0, 0, 0, 1;
+
+        R1 = U * Rz1.transpose() * V.transpose();
+        R2 = U * Rz2.transpose() * V.transpose();
+        t_wedge1 = U * Rz1 * realA * U.transpose();
+        t_wedge2 = U * Rz2 * realA * U.transpose();
+
+        // check t^R=E up to scale
+        Eigen::Matrix3d tR = t_wedge1 * R1;
+        cout << "F2Rt: R = " << endl
+             << R1 << endl;
+        cout << "F2Rt: t = " << endl
+             << t_wedge1 << endl;
     }
 }

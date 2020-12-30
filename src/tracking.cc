@@ -60,7 +60,7 @@ namespace primerSlam {
         cout << "match left and right ORB feature" << endl;
         matchORBFeaturesRANSAC(matches, fundamental_matrix, current_frame_->left_features_,
                                current_frame_->right_features_);
-        //showFeaturesMatchOneFrame(matches);
+        showFeaturesMatchOneFrame(matches);
         filterORBFeaturesStereo(current_frame_->left_features_, current_frame_->right_features_, matches);
 
         // 到此为止是左右下标匹配的feature，缺少mapPoint,outlier一律为false，因为已经匹配上了
@@ -161,7 +161,7 @@ namespace primerSlam {
         cv::drawMatches(last_frame_->left_image_, last_key, current_frame_->left_image_,
                         cur_key, matches, show_image);
         imshow("show Features Match Two Frame ", show_image);
-        cv::waitKey(-1);
+        //cv::waitKey(-1);
         return true;
     }
 
@@ -296,11 +296,24 @@ namespace primerSlam {
         cout << "match " << matches.size() << " new features" << endl;
 
         // 左图已经存在的feature没有右图对应点，所以直接放空指针
-        for (auto &feat:current_frame_->left_features_) {
+        for (size_t i = 0; i < current_frame_->left_features_.size(); ++i) {
             current_frame_->right_features_.push_back(nullptr);
         }
         // 对于新找到的feature，将其存放
+        int exist_count = 0;
         for (const cv::DMatch &match:matches) {
+            // 判断新找到的feature是否已经在frame里面
+            bool is_exist = false;
+            for (auto &feat:current_frame_->left_features_) {
+                if (fabs(feat->position_.pt.x - left_keypoints.at(match.queryIdx).pt.x) < 0.1 &&
+                    fabs(feat->position_.pt.y - left_keypoints.at(match.queryIdx).pt.y) < 0.1) {
+                    is_exist = true;
+                }
+            }
+            if (is_exist) {
+                exist_count += 1;
+                continue;
+            }
             Feature::Ptr left_feature = std::make_shared<Feature>(
                     current_frame_, left_keypoints.at(match.queryIdx), left_descriptors.row(match.queryIdx)
             );
@@ -310,6 +323,7 @@ namespace primerSlam {
             current_frame_->left_features_.push_back(left_feature);
             current_frame_->right_features_.push_back(right_feature);
         }
+        cout << "remove " << exist_count << " features" << endl;
         // 最后，建立新的地图点
         triangulateNewPoints();
 
