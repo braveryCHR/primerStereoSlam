@@ -35,6 +35,8 @@ namespace primerSlam {
             Map::KeyFrameType active_kfs = map_->getActiveKeyFrames();
             Map::LandmarksType active_landmarks = map_->getActiveMapPoints();
             Optimize(active_kfs, active_landmarks);
+            cout << "################################" << endl;
+            cout << "Backend Loop over!" << endl;
         }
     }
 
@@ -46,6 +48,7 @@ namespace primerSlam {
                         g2o::make_unique<LinearSolverType>()));
         g2o::SparseOptimizer optimizer;
         optimizer.setAlgorithm(solver);
+        optimizer.setVerbose(true);
 
         std::map<unsigned long , VertexPose *> vertices;
         unsigned long max_kf_id = 0;
@@ -62,6 +65,9 @@ namespace primerSlam {
             vertices.insert({kf->keyframe_id_, vertex_pose});
         }
 
+        std::cout << "+++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        std::cout << "Backend: Keyframes : " << keyframes.size() << std::endl;
+
         std::map<unsigned long, VertexP3d *> vertices_landmarks;
 
         Mat33 K = cam_left_->K();
@@ -69,7 +75,7 @@ namespace primerSlam {
         SE3 right_ext = cam_right_->pose();
 
         int index = 1;
-        double chi2_th = 2.5;
+        double chi2_th = 5;
         std::map<EdgeProjection *, Feature::Ptr> edges_and_features;
 
         for (auto &landmark: landmarks)
@@ -84,6 +90,7 @@ namespace primerSlam {
                 if (feat->is_outlier_ || feat->frame_.lock() == nullptr) continue;
                 auto frame = feat->frame_.lock();
                 EdgeProjection * edge = nullptr;
+
                 if (feat->is_on_left_image_) {
                     edge = new EdgeProjection(K, left_ext);
                 } else {
@@ -114,12 +121,15 @@ namespace primerSlam {
             }
         }
 
+        std::cout << "Backend Edges : " << index << std::endl;
+        std::cout << "Backend landmark : " << vertices_landmarks.size() << std::endl;
+
         optimizer.initializeOptimization();
         optimizer.optimize(5);
 
         int cnt_outlier = 0, cnt_inlier = 0;
         int iteration = 0;
-        while (iteration < 5) {
+        while (iteration < 4) {
             cnt_inlier = 0;
             cnt_outlier = 0;
 
@@ -131,7 +141,7 @@ namespace primerSlam {
                 }
             }
             double inlier_ratio = cnt_inlier / double  (cnt_inlier + cnt_outlier);
-            if (inlier_ratio > 0.5) {
+            if (inlier_ratio > 0.4) {
                 break;
             } else {
                 chi2_th *= 2;
@@ -147,7 +157,7 @@ namespace primerSlam {
                 ef.second->is_outlier_ = false;
             }
         }
-        std::cout << "Outlier/Inlier in optimization: " << cnt_outlier << "/" << cnt_inlier << std::endl;
+        std::cout << "Backedn Outlier/Inlier in optimization: " << cnt_outlier << "/" << cnt_inlier << std::endl;
         for (auto &v: vertices) {
             keyframes.at(v.first)->setPose(v.second->estimate());
         }

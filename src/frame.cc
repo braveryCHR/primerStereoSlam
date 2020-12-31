@@ -9,12 +9,12 @@ namespace primerSlam {
             : id_(id), time_stamp_(time_stamp), pose_(pose), left_image_(left_image), right_image_(right_image) {}
 
     SE3 Frame::pose() {
-        unique_lock<mutex> lock(pose_mutex_);
+        unique_lock<mutex> lck(pose_mutex_);
         return pose_;
     }
 
     void Frame::setPose(const SE3 &pose) {
-        unique_lock<mutex> lock(pose_mutex_);
+        unique_lock<mutex> lck(pose_mutex_);
         pose_ = pose;
     }
 

@@ -6,6 +6,7 @@
 //#include <utility>
 
 #include "utils.h"
+//#include "localMapping.h"
 //#include "config.h"
 #include "feature.h"
 #include "tracking.h"
@@ -15,101 +16,101 @@
 #include <opencv2/core/eigen.hpp>
 
 namespace primerSlam {
-    int Tracking::estimateCurrentPose() {
-
-        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-        cout << "Starting G2O optimize T: " << endl;
-
-        typedef g2o::BlockSolver_6_3 BlockSolverType;
-        typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
-                LinearSolverType;
-        auto solver = new g2o::OptimizationAlgorithmLevenberg(
-                g2o::make_unique<BlockSolverType>(
-                        g2o::make_unique<LinearSolverType>()));
-        g2o::SparseOptimizer optimizer;
-        optimizer.setAlgorithm(solver);
-        optimizer.setVerbose(true);
-
-        // 设置边 只有一条
-        auto *vertex_pose = new VertexPose();
-        vertex_pose->setId(0);
-        vertex_pose->setEstimate(current_frame_->pose());
-        optimizer.addVertex(vertex_pose);
-
-        // 设置顶点 都添加到这条边上
-        Mat33 camera_K = left_camera_->K();
-
-        int index = 1;
-        vector<EdgeProjectionPose *> edges;
-        vector<Feature::Ptr> features;
-
-        for (const auto &feature:current_frame_->left_features_) {
-            auto mp = feature->map_point_.lock();
-            if (mp != nullptr) {
-                features.push_back(feature);
-                auto *edge = new EdgeProjectionPose(mp->pos_, camera_K);
-                edge->setId(index);
-                edge->setVertex(0, vertex_pose);
-                edge->setMeasurement(Vec2d(feature->position_.pt.x,
-                                           feature->position_.pt.y));
-//                std::cout << "p3d" << std::endl << mp->pos_ << std::endl << std::endl;
-//                std::cout << "p2d" << std::endl << feature->position_.pt << std::endl << std::endl;
-                edge->setInformation(Eigen::Matrix2d::Identity());
-                edge->setRobustKernel(new g2o::RobustKernelHuber);
-                edges.push_back(edge);
-                optimizer.addEdge(edge);
-                ++index;
-            }
-        }
-
-
-        optimizer.setVerbose(false);
-        const double chi2_th = 2.5;
-        int cnt_outlier = 0;
-        for (int iteration = 0; iteration < 4; ++iteration) {
-            vertex_pose->setEstimate(current_frame_->pose());
-            optimizer.initializeOptimization();
-            optimizer.optimize(3);
-            cnt_outlier = 0;
-
-            // count the outliers
-            for (size_t i = 0; i < edges.size(); ++i) {
-                auto e = edges[i];
-                if (features[i]->is_outlier_) {
-                    e->computeError();
-                }
-                if (e->chi2() > chi2_th) {
-                    features[i]->is_outlier_ = true;
-                    e->setLevel(1);
-                    cnt_outlier++;
-                } else {
-                    features[i]->is_outlier_ = false;
-                    e->setLevel(0);
-                };
-
-                if (iteration == 2) {
-                    e->setRobustKernel(nullptr);
-                }
-            }
-        }
-
-        current_frame_->setPose(vertex_pose->estimate());
-
-        cout << " G2O Method Current Pose = \n" << current_frame_->pose().matrix() << endl;
-        int count = 0;
-
-        for (auto &feat : features) {
-            if (feat->is_outlier_) {
-                feat->map_point_.reset();
-                feat->is_outlier_ = false;  // maybe we can still use it in future
-            } else {
-                count++;
-            }
-        }
-        cout << "g2o inliers : " << count << endl;
-        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-        return 0;
-    }
+//    int Tracking::estimateCurrentPose() {
+//
+//        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+//        cout << "Starting G2O optimize T: " << endl;
+//
+//        typedef g2o::BlockSolver_6_3 BlockSolverType;
+//        typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
+//                LinearSolverType;
+//        auto solver = new g2o::OptimizationAlgorithmLevenberg(
+//                g2o::make_unique<BlockSolverType>(
+//                        g2o::make_unique<LinearSolverType>()));
+//        g2o::SparseOptimizer optimizer;
+//        optimizer.setAlgorithm(solver);
+//        optimizer.setVerbose(true);
+//
+//        // 设置边 只有一条
+//        auto *vertex_pose = new VertexPose();
+//        vertex_pose->setId(0);
+//        vertex_pose->setEstimate(current_frame_->pose());
+//        optimizer.addVertex(vertex_pose);
+//
+//        // 设置顶点 都添加到这条边上
+//        Mat33 camera_K = left_camera_->K();
+//
+//        int index = 1;
+//        vector<EdgeProjectionPose *> edges;
+//        vector<Feature::Ptr> features;
+//
+//        for (const auto &feature:current_frame_->left_features_) {
+//            auto mp = feature->map_point_.lock();
+//            if (mp != nullptr) {
+//                features.push_back(feature);
+//                auto *edge = new EdgeProjectionPose(mp->pos_, camera_K);
+//                edge->setId(index);
+//                edge->setVertex(0, vertex_pose);
+//                edge->setMeasurement(Vec2d(feature->position_.pt.x,
+//                                           feature->position_.pt.y));
+////                std::cout << "p3d" << std::endl << mp->pos_ << std::endl << std::endl;
+////                std::cout << "p2d" << std::endl << feature->position_.pt << std::endl << std::endl;
+//                edge->setInformation(Eigen::Matrix2d::Identity());
+//                edge->setRobustKernel(new g2o::RobustKernelHuber);
+//                edges.push_back(edge);
+//                optimizer.addEdge(edge);
+//                ++index;
+//            }
+//        }
+//
+//
+//        optimizer.setVerbose(true);
+//        const double chi2_th = 2.5;
+//        int cnt_outlier = 0;
+//        for (int iteration = 0; iteration < 4; ++iteration) {
+//            vertex_pose->setEstimate(current_frame_->pose());
+//            optimizer.initializeOptimization();
+//            optimizer.optimize(3);
+//            cnt_outlier = 0;
+//
+//            // count the outliers
+//            for (size_t i = 0; i < edges.size(); ++i) {
+//                auto e = edges[i];
+//                if (features[i]->is_outlier_) {
+//                    e->computeError();
+//                }
+//                if (e->chi2() > chi2_th) {
+//                    features[i]->is_outlier_ = true;
+//                    e->setLevel(1);
+//                    cnt_outlier++;
+//                } else {
+//                    features[i]->is_outlier_ = false;
+//                    e->setLevel(0);
+//                };
+//
+//                if (iteration == 2) {
+//                    e->setRobustKernel(nullptr);
+//                }
+//            }
+//        }
+//
+//        current_frame_->setPose(vertex_pose->estimate());
+//
+//        cout << " G2O Method Current Pose = \n" << current_frame_->pose().matrix() << endl;
+//        int count = 0;
+//
+//        for (auto &feat : features) {
+//            if (feat->is_outlier_) {
+//                feat->map_point_.reset();
+//                feat->is_outlier_ = false;  // maybe we can still use it in future
+//            } else {
+//                count++;
+//            }
+//        }
+//        cout << "g2o inliers : " << count << endl;
+//        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+//        return 0;
+//    }
 
     int Tracking::estimateCurrentPosePnp() {
         cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -131,47 +132,45 @@ namespace primerSlam {
                                   feature->position_.pt.y);
             }
         }
-        cout << "pnp with " << p3ds.size() << " feature" << endl;
         cv::Mat r_pre, translation;
         vector<int> inliers;
         // 根据内点设置feature属性
         assert(inliers.size() < current_frame_->left_features_.size());
-//        for (auto &feat:current_frame_->left_features_)
-//            feat->is_outlier_ = true;
-//        for (auto idx:inliers) {
-//            current_frame_->left_features_.at(idx)->is_outlier_ = false;
-//        }
+        for (auto &feat:current_frame_->left_features_)
+            feat->is_outlier_ = true;
+        for (auto idx:inliers) {
+            current_frame_->left_features_.at(idx)->is_outlier_ = false;
+        }
 
         cv::solvePnPRansac(p3ds, p2ds, camera_K, Mat(), r_pre,
-                           translation, false, 100000, 2, 0.99, inliers);
+                           translation, false, 10000, 2, 0.99, inliers);
         cv::Mat R;
         cv::Rodrigues(r_pre, R);
-        cout << " PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
-        cout << "ransac inliers : " << inliers.size() << endl;
+        cout << "PoseEstimate PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
+        cout << "PoseEstimate ransac inliers : " << inliers.size() << endl;
         cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
         Mat33 R_e;
         Vec3d t_e;
         cv::cv2eigen(R, R_e);
         cv::cv2eigen(translation, t_e);
         current_frame_->setPose(SE3(R_e, t_e));
+
+//        for (size_t i = 0; i < inliers.size(); i++) {
+//            cv::Point3f p3d = p3ds[inliers[i]];
+//            cv::Point2f p2d = p2ds[inliers[i]];
+//            Eigen::MatrixXd xyz(3, 1);
+//            xyz << p3d.x, p3d.y, p3d.z;
+//            Vec3d xyz_camera = K * (R_e * xyz + t_e);
+//            double u = xyz_camera[0] / xyz_camera[2];
+//            double v = xyz_camera[1] / xyz_camera[2];
+//            cv::circle(current_frame_->left_image_, cv::Point2d(p2d.x, p2d.y), 8, cv::Scalar(0, 0, 255));
+//            cv::circle(current_frame_->left_image_, cv::Point2d(u, v), 5, cv::Scalar(0, 255, 255));
+//        }
+//        cv::imshow("Reprojection: ", current_frame_->left_image_);
+//        cv::waitKey(-1);
         return inliers.size();
-
-        for (size_t i = 0; i < inliers.size(); i++) {
-            cv::Point3f p3d = p3ds[inliers[i]];
-            cv::Point2f p2d = p2ds[inliers[i]];
-            Eigen::MatrixXd xyz(3, 1);
-            xyz << p3d.x, p3d.y, p3d.z;
-            Vec3d xyz_camera = K * (R_e * xyz + t_e);
-            double u = xyz_camera[0] / xyz_camera[2];
-            double v = xyz_camera[1] / xyz_camera[2];
-            cv::circle(current_frame_->left_image_, cv::Point2d(p2d.x, p2d.y), 8, cv::Scalar(0, 0, 255));
-            cv::circle(current_frame_->left_image_, cv::Point2d(u, v), 5, cv::Scalar(0, 255, 255));
-        }
-        cv::imshow("Reprojection: ", current_frame_->left_image_);
-        cv::waitKey(-1);
-
-        cout << R << endl << endl;
-        cout << translation << endl;
+//        cout << R << endl << endl;
+//        cout << translation << endl;
     }
 
     bool Tracking::matchORBFeaturesRANSAC(vector<cv::DMatch> &matches, cv::Mat &fundamental_matrix,
@@ -220,19 +219,20 @@ namespace primerSlam {
         }
 
         m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
-
-        F2Rt(m_Fundamental);
         // 计算野点个数
         int outliner_count = 0;
+        unordered_map<int, int> train_ids;
+
         for (unsigned int i = 0; i < good_matches.size(); i++) {
             if (m_RANSACStatus[i] == 0) // 状态为0表示野点
             {
                 outliner_count++;
-            } else {
+            } else if (train_ids.find(good_matches.at(i).trainIdx) == train_ids.end()){
                 matches.push_back(good_matches.at(i));
+                train_ids.insert(make_pair(good_matches.at(i).trainIdx, good_matches.at(i).queryIdx));
             }
         }
-        cout << "final match number : " << matches.size() << endl;
+        cout << "RASNAC ORB final match number : " << matches.size() << endl;
         // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
         return true;
     }
@@ -261,7 +261,7 @@ namespace primerSlam {
                 good_matches.push_back(bf_match);
             }
         }
-        //cout << "good match number : " << good_matches.size() << endl;
+        cout << "good match number : " << good_matches.size() << endl;
 
         Mat m_Fundamental;
         vector<uchar> m_RANSACStatus;
@@ -280,19 +280,19 @@ namespace primerSlam {
         }
 
         m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
-
-
         // 计算野点个数
         int outliner_count = 0;
+        unordered_map<int, int> train_ids;
         for (unsigned int i = 0; i < good_matches.size(); i++) {
             if (m_RANSACStatus[i] == 0) // 状态为0表示野点
             {
                 outliner_count++;
-            } else {
+            } else if (train_ids.find(good_matches.at(i).trainIdx) == train_ids.end()){
                 matches.push_back(good_matches.at(i));
-            }
+                train_ids.insert(make_pair(good_matches.at(i).trainIdx, good_matches.at(i).queryIdx));
+            }  else {;}
         }
-        cout << "final match number : " << matches.size() << endl;
+        cout << "RANSAC ORB final match number : " << matches.size() << endl;
         // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
         return true;
     }

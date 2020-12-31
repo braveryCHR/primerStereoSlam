@@ -22,7 +22,7 @@ namespace primerSlam {
     bool DataLoader::Init() {
         ifstream fin(dataset_dir_ + "/calib.txt");
         if (!fin) {
-            cout << "Cannot find dataset: " << dataset_dir_ << "/calib.txt !";
+            cout << "DataLoader Cannot find dataset: " << dataset_dir_ << "/calib.txt !";
             return false;
         }
 
@@ -47,7 +47,7 @@ namespace primerSlam {
                     K(0, 0), K(1, 1), K(0, 2), K(1, 2),
                     t.norm(), SE3(SO3(), t)));
             cameras_.push_back(new_camera);
-            cout << "Camera " << i << " extrinsics: " << t.transpose() << endl;
+            cout << "DataLoader Camera " << i << " extrinsics: " << t.transpose() << std::endl;
         }
         fin.close();
         current_image_index_ = 0;
@@ -56,12 +56,12 @@ namespace primerSlam {
 
     Frame::Ptr DataLoader::nextFrame() {
         boost::format fmt("%s/image_%d/%06d.png");
-        std::cout << "Now this is the " << current_image_index_ << " images!" << endl;
+        std::cout << "DataLoader Now this is the " << current_image_index_ << " images!" << endl;
         cv::Mat left_image, right_image;
         left_image = cv::imread((fmt % dataset_dir_ % 0 % current_image_index_).str(), cv::IMREAD_GRAYSCALE);
         right_image = cv::imread((fmt % dataset_dir_ % 1 % current_image_index_).str(), cv::IMREAD_GRAYSCALE);
         if (left_image.data == nullptr || right_image.data == nullptr) {
-            cout << "Cannot find images at index " << current_image_index_;
+            cout << "DataLoader Cannot find images at index " << current_image_index_;
             return nullptr;
         }
 

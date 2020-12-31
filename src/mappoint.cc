@@ -11,23 +11,23 @@ namespace primerSlam {
             : id_(id), pos_(std::move(pos)) {}
 
     Vec3d MapPoint::pos() {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         return pos_;
     }
 
     void MapPoint::setPos(const Vec3d &pos) {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         pos_ = pos;
     }
 
     void MapPoint::addObservation(const shared_ptr<Feature> &feat) {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         observations_.push_back(feat);
         observed_times_ += 1;
     }
 
     void MapPoint::removeObservation(const shared_ptr<Feature> &feat) {
-        unique_lock<mutex> lock(data_mutex_);
+        //unique_lock<mutex> lck(data_mutex_);
         for (auto iter = observations_.begin();
              iter != observations_.end(); ++iter) {
             if (iter->lock() == feat) {
@@ -40,7 +40,7 @@ namespace primerSlam {
     }
 
     list<weak_ptr<Feature>> MapPoint::getObservation() {
-        unique_lock<mutex> lock(data_mutex_);
+        unique_lock<mutex> lck(data_mutex_);
         return observations_;
     }
 
