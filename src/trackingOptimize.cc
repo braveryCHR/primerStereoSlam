@@ -143,7 +143,7 @@ namespace primerSlam {
         }
 
         cv::solvePnPRansac(p3ds, p2ds, camera_K, Mat(), r_pre,
-                           translation, false, 10000, 2, 0.99, inliers);
+                           translation, false, 10000, 4, 0.99, inliers);
         cv::Mat R;
         cv::Rodrigues(r_pre, R);
         cout << "PoseEstimate PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;

@@ -101,6 +101,15 @@ namespace primerSlam {
     }
 
     bool Tracking::reset() {
+        cout << "reset" << endl;
+        backend_->Stop();
+        Backend::Ptr backend = make_shared<Backend>();
+        Map::Ptr map = make_shared<Map>();
+        setMap(map);
+        setBackend(backend);
+        backend->SetMap(map);
+        viewer_->SetMap(map);
+        stereoInit();
         return false;
     }
 
@@ -237,18 +246,19 @@ namespace primerSlam {
             }
         }
 
-        int count= 0, unstable = 0;
+        int count = 0, unstable = 0;
         cout << "Tracking Start Check MAPPoint ID!" << endl;
-        for (unsigned int i = 0; i<current_frame_->left_features_.size(); i++ ) {
+        for (unsigned int i = 0; i < current_frame_->left_features_.size(); i++) {
             auto mp = current_frame_->left_features_[i]->map_point_.lock();
             if (mp) {
-                count ++;
+                count++;
                 int flag = 0;
                 auto obs = mp->getObservation();
-                for (auto & ob : obs) {
-                    if (ob.lock()->map_point_.lock() != mp){
+                for (auto &ob : obs) {
+                    if (ob.lock()->map_point_.lock() != mp) {
                         flag = 1;
-                        std::cout << "Tracking Check"<< i <<" Map id:" << mp->id_ << " Ob remap point:" << ob.lock()->map_point_.lock()->id_ << std::endl;
+                        std::cout << "Tracking Check" << i << " Map id:" << mp->id_ << " Ob remap point:"
+                                  << ob.lock()->map_point_.lock()->id_ << std::endl;
                     }
 
                 }
@@ -352,6 +362,7 @@ namespace primerSlam {
         cout << "remove " << exist_count << " features" << endl;
         // 最后，建立新的地图点
         triangulateNewPoints();
+        backend_->UpdateMap();
         if (viewer_)
             viewer_->UpdateMap();
         return true;
@@ -413,6 +424,4 @@ namespace primerSlam {
         cout << "status change from " << status2string[status_] << " to " << status2string[to_status] << endl;
         status_ = to_status;
     }
-
-
 }

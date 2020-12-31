@@ -31,13 +31,13 @@ namespace primerSlam {
 
         void Stop();
 
+        std::thread backend_thread_;
     private:
         void BackendLoop();
 
         void Optimize(Map::KeyFrameType &keyframes, Map::LandmarksType &landmarks);
 
         std::shared_ptr<Map> map_;
-        std::thread backend_thread_;
         std::mutex data_mutex_;
 
         std::condition_variable map_update_;
