@@ -13,7 +13,7 @@ using namespace primerSlam;
 
 
 int main(int argc, char **argv){
-    string path = "/home/alanjiang/Dataset/00";
+    string path = "/home/bravery/CLionProjects/primerStereoSlam/data/00";
 
     DataLoader::Ptr dataloader = make_shared<DataLoader>(path);
     dataloader->Init();

@@ -140,7 +140,7 @@ namespace primerSlam {
                     -fy * X * Zinv;
 
             _jacobianOplusXj = _jacobianOplusXi.block<2, 3>(0, 0) *
-                               _cam_ext.rotationMatrix() * T.rotationMatrix();
+                               _cam_ext.rotation_matrix() * T.rotation_matrix();
         }
 
         virtual bool read(std::istream & in) override {return true; };

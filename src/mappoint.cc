@@ -27,7 +27,7 @@ namespace primerSlam {
     }
 
     void MapPoint::removeObservation(const shared_ptr<Feature> &feat) {
-        unique_lock<mutex> lck(data_mutex_);
+        //unique_lock<mutex> lck(data_mutex_);
         for (auto iter = observations_.begin();
              iter != observations_.end(); ++iter) {
             if (iter->lock() == feat) {

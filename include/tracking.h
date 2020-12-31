@@ -107,7 +107,7 @@ namespace primerSlam {
         // 跟踪状态好至少需要的feature数目
         int num_features_tracking_good = 150;
         // 跟踪状态不好至少需要的feature数目
-        int num_features_tracking_bad_ = 30;
+        int num_features_tracking_bad_ = 20;
         // 设置关键帧时需要的feature数目
         int num_features_needed_for_keyframe_ = 150;
         // 实际跟踪的内点个数
