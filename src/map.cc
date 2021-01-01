@@ -3,7 +3,6 @@
 //
 
 #include "map.h"
-#include "feature.h"
 
 namespace primerSlam {
 

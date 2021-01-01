@@ -2,10 +2,6 @@
 // Created by bravery on 2020/12/29.
 //
 #include "tracking.h"
-#include "mappoint.h"
-#include "camera.h"
-#include "totalInclude.h"
-#include <opencv2/core/eigen.hpp>
 
 
 namespace primerSlam {
@@ -65,7 +61,7 @@ namespace primerSlam {
         t_wedge2 = U * Rz2 * realA * U.transpose();
 
         // check t^R=E up to scale
-        Eigen::Matrix3d tR = t_wedge1 * R1;
+        // Eigen::Matrix3d tR = t_wedge1 * R1;
         cout << "F2Rt: R = " << endl
              << R1 << endl;
         cout << "F2Rt: t = " << endl

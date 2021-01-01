@@ -3,8 +3,7 @@
 //
 
 #include "mappoint.h"
-#include <utility>
-#include "feature.h"
+
 
 namespace primerSlam {
     MapPoint::MapPoint(long id, Vec3d pos)

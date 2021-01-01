@@ -20,6 +20,10 @@
 #include <typeinfo>
 #include <unordered_map>
 #include <vector>
+#include <random>
+#include <fstream>
+#include <boost/format.hpp>
+#include <chrono>
 // define the commonly included file to avoid a long include list
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -31,8 +35,14 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/eigen.hpp>
 // for log
 #include <glog/logging.h>
+#include <utility>
+// for eigen
+#include <eigen3/Eigen/Dense>
+// for pangolin
+#include <pangolin/pangolin.h>
 
 typedef Sophus::SE3 SE3;
 typedef Sophus::SO3 SO3;

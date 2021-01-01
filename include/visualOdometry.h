@@ -10,6 +10,7 @@
 #include "dataLoader.h"
 #include "tracking.h"
 #include "viewer.h"
+#include "config.h"
 
 namespace primerSlam {
     class VisualOdometry {

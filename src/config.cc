@@ -13,7 +13,7 @@ namespace primerSlam {
         }
         config_->file_ = cv::FileStorage(filename.c_str(), cv::FileStorage::READ);
         if (!config_->file_.isOpened()) {
-            cout << "Config Parameter file " << filename << "does not exist!";
+            cout << "Config Parameter file " << filename << " does not exist!";
             config_->file_.release();
             return false;
         }

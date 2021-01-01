@@ -6,6 +6,7 @@
 #define PRIMERSTEREOSLAM_MAPPOINT_H
 
 #include "totalInclude.h"
+#include "feature.h"
 
 namespace primerSlam {
     class Frame;

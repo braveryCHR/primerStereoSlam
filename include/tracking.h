@@ -5,11 +5,15 @@
 #ifndef PRIMERSTEREOSLAM_TRACKING_H
 #define PRIMERSTEREOSLAM_TRACKING_H
 
-#include <opencv2/features2d.hpp>
 #include "frame.h"
 #include "totalInclude.h"
 #include "map.h"
 #include "viewer.h"
+#include "config.h"
+#include "utils.h"
+#include "feature.h"
+#include "g2oTypes.h"
+#include "backend.h"
 
 namespace primerSlam {
 
@@ -18,6 +22,7 @@ namespace primerSlam {
     };
 
     class Backend;
+
     class Viewer;
 
 
@@ -31,13 +36,13 @@ namespace primerSlam {
 
         TrackingStatus getStatus();
 
-        bool addFrame(Frame::Ptr frame);
+        bool addFrame(const Frame::Ptr &frame);
 
         void setMap(const Map::Ptr &map);
 
-        void setBackend(std::shared_ptr<Backend> backend) {backend_ = backend;}
+        void setBackend(std::shared_ptr<Backend> backend) { backend_ = backend; }
 
-        void setViewer(std::shared_ptr<Viewer> viewer) {viewer_ = viewer;}
+        void setViewer(std::shared_ptr<Viewer> viewer) { viewer_ = viewer; }
 
         void setCamera(const Camera::Ptr &left_camera, const Camera::Ptr &right_camera);
 
@@ -77,8 +82,10 @@ namespace primerSlam {
 
         int trackLastFrame();
 
+        // 使用BA的方法来计算
         int estimateCurrentPose();
 
+        // 使用PNP + RANSAC的方法来计算
         int estimateCurrentPosePnp();
 
         bool insertKeyFrame();
@@ -89,9 +96,11 @@ namespace primerSlam {
 
         void changeStatus(TrackingStatus to_status);
 
+        // debug函数，用于检查三角化的结果
         void checkTriangulate();
 
-        void F2Rt(const Mat& F);
+        // debug函数，用对极几何方法分解R和t
+        void F2Rt(const Mat &F);
 
         TrackingStatus status_ = TrackingStatus::INITING;
 
@@ -108,15 +117,15 @@ namespace primerSlam {
         cv::Ptr<cv::FeatureDetector> feature_detector;
         cv::Ptr<cv::BFMatcher> feature_matcher;
         // 初始化需要得到的feature数目
-        int num_features_init_ = 200;
+        int num_features_init_;
         // 跟踪状态好至少需要的feature数目
-        int num_features_tracking_good = 150;
+        int num_features_tracking_good_;
         // 跟踪状态不好至少需要的feature数目
-        int num_features_tracking_bad_ = 10;
+        int num_features_tracking_bad_;
         // 设置关键帧时需要的feature数目
-        int num_features_needed_for_keyframe_ = 150;
+        int num_features_needed_for_keyframe_;
         // 实际跟踪的内点个数
-        int num_feature_track_inliers = 0;
+        int num_feature_track_inliers;
     };
 
 }

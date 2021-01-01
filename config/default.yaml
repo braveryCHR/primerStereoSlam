@@ -1,0 +1,23 @@
+%YAML:1.0
+# data
+# the tum dataset directory, change it to yours!
+# dataset_dir: /media/xiang/Data/Dataset/Kitti/dataset/sequences/00
+dataset_dir: /home/bravery/CLionProjects/primerStereoSlam/data/00
+
+# camera intrinsics
+camera.fx: 517.3
+camera.fy: 516.5
+camera.cx: 325.1
+camera.cy: 249.7
+
+
+# ORB每次检测的特征数目
+num_features_detect: 800
+# 初始化需要得到的feature数目
+num_features_init: 200
+# 跟踪状态好至少需要的feature数目
+num_features_tracking_good: 150
+# 跟踪状态不好至少需要的feature数目
+num_features_tracking_bad: 20
+# 设置关键帧时需要的feature数目
+num_features_needed_for_keyframe: 150

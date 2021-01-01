@@ -8,6 +8,7 @@
 #include "totalInclude.h"
 #include "frame.h"
 #include "mappoint.h"
+#include "feature.h"
 
 namespace primerSlam {
     class Map {

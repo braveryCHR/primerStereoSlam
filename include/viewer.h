@@ -5,12 +5,13 @@
 #ifndef PRIMERSTEREOSLAM_VIEWER_H
 #define PRIMERSTEREOSLAM_VIEWER_H
 
-#include <thread>
-#include <pangolin/pangolin.h>
 
 #include "totalInclude.h"
 #include "frame.h"
 #include "map.h"
+#include "feature.h"
+#include "frame.h"
+#include "mappoint.h"
 
 namespace primerSlam {
     class Viewer {
