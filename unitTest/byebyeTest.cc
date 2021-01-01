@@ -10,13 +10,13 @@
 #include "camera.h"
 #include "totalInclude.h"
 #include "tracking.h"
-#include "localMapping.h"
+#include "backend.h"
 
 using namespace std;
 
 int main() {
     primerSlam::Tracking a;
-    primerSlam::LocalMapping b;
+    primerSlam::Backend b;
     cout << "New test for jjp branch!" << endl;
     cout << " Good bye!!! " << endl;
     return 0;

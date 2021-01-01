@@ -2,13 +2,7 @@
 // Created by bravery on 2020/12/1.
 //
 #include "viewer.h"
-#include "feature.h"
-#include "frame.h"
 
-#include <pangolin/pangolin.h>
-#include <opencv2/opencv.hpp>
-#include "mappoint.h"
-#include "map.h"
 
 namespace primerSlam {
 
@@ -22,12 +16,12 @@ namespace primerSlam {
     }
 
     void Viewer::AddCurrentFrame(Frame::Ptr current_frame) {
-        std::unique_lock<std::mutex> lock(viewer_data_mutex_);
+        std::unique_lock<std::mutex> lck(viewer_data_mutex_);
         current_frame_ = current_frame;
     }
 
     void Viewer::UpdateMap() {
-        std::unique_lock<std::mutex> lock(viewer_data_mutex_);
+        std::unique_lock<std::mutex> lck(viewer_data_mutex_);
         assert(map_ != nullptr);
         active_keyframes_ = map_->getActiveKeyFrames();
         active_landmarks_ = map_->getActiveMapPoints();
@@ -42,12 +36,12 @@ namespace primerSlam {
 
         pangolin::OpenGlRenderState vis_camera(
                 pangolin::ProjectionMatrix(1024, 768, 400, 400, 512, 384, 0.1, 1000),
-                pangolin::ModelViewLookAt(0, -5, -10, 0, 0, 0, 0, -1, 0)
+                pangolin::ModelViewLookAt(0, -5, -10, 0, 0, 0, 0.0, -1.0, 0.0)
         );
-        pangolin::View & vis_display = pangolin::CreateDisplay().SetBounds(0, 1, 0, 1, -1024.0f/768.0f)
+        pangolin::View & vis_display = pangolin::CreateDisplay().SetBounds(0.0, 1.0, 0.0, 1.0, -1024.0f/768.0f)
                 .SetHandler(new pangolin::Handler3D(vis_camera));
 
-        const float blue[3] = {0, 0, 1};
+        // const float blue[3] = {0, 0, 1};
         const float green[3] = {0, 1, 0};
 
         while (!pangolin::ShouldQuit() && viewer_running_) {
@@ -69,7 +63,7 @@ namespace primerSlam {
             pangolin::FinishFrame();
             usleep(5000);
         }
-        std::cout << "Stop Viewer " << std::endl;
+        std::cout << "Viewer Stop Viewer " << std::endl;
     }
 
     cv::Mat Viewer::PlotFrameImage() {
@@ -78,7 +72,7 @@ namespace primerSlam {
         for (std::size_t i = 0; i < current_frame_->left_features_.size(); ++i) {
             if (current_frame_->left_features_[i]->map_point_.lock()) {
                 auto feat = current_frame_->left_features_[i];
-                cv::circle(img_out, feat->position_.pt, 2, cv::Scalar(feat->map_point_.lock()->color[0], feat->map_point_.lock()->color[1], feat->map_point_.lock()->color[2]), 2);
+                cv::circle(img_out, feat->position_.pt, 2, cv::Scalar(0, 255, 0), 2);
             }
         }
         return img_out;
@@ -148,7 +142,7 @@ namespace primerSlam {
         for (auto & landmark : active_landmarks_) {
             auto pos = landmark.second->pos();
             // glColor3f(red[0], red[1], red[2]);
-            glColor3f(landmark.second->color[0] /255.0f, landmark.second->color[1]/255.0f, landmark.second->color[2]/255.0f);
+            glColor3f(red[0], red[1], red[2]);
             glVertex3d(pos[0], pos[1], pos[2]);
         }
         glEnd();

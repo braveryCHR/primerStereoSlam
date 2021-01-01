@@ -3,9 +3,7 @@
 //
 
 #include "visualOdometry.h"
-#include <chrono>
-#include <memory>
-#include <config.h>
+
 
 namespace primerSlam {
     VisualOdometry::VisualOdometry(std::string &config_path)
@@ -37,8 +35,8 @@ namespace primerSlam {
 
     void VisualOdometry::Run() {
         while (true) {
-            std::cout << "===============================================" << std::endl;
-            std::cout << "VO is tracking!" << std::endl;
+            LOG(INFO) << "===============================================" << std::endl;
+            LOG(INFO) << "VO is tracking!" << std::endl;
             if (!Step()) {
                 break;
             }
@@ -46,7 +44,7 @@ namespace primerSlam {
         }
         backend_->Stop();
         viewer_->Close();
-        std::cout << "VO is over !" << std::endl;
+        LOG(INFO) << "VO is over !" << std::endl;
     }
 
     bool VisualOdometry::Step() {
@@ -56,7 +54,7 @@ namespace primerSlam {
         bool success = tracking_->addFrame(new_frame);
         auto t2 = std::chrono::steady_clock::now();
         auto time_cost = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-        std::cout << "VO cost time "<< time_cost.count() << "seconds!" << std::endl;
+        LOG(INFO) << "VO cost time "<< time_cost.count() << "seconds!" << std::endl;
         return success;
     }
 

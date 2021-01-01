@@ -29,6 +29,8 @@ namespace primerSlam {
         pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
 
         // 判断解的质量好不好
+        if (pt_world.norm() > 1000000.0)
+            return false;
         return svd.singularValues()[3] / svd.singularValues()[2] < 1e-2;
     }
 }

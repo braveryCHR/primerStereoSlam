@@ -2,118 +2,103 @@
 // Created by bravery on 2020/12/22.
 //
 
-#include <memory>
-//#include <utility>
-
-#include "utils.h"
-//#include "localMapping.h"
-//#include "config.h"
-#include "feature.h"
 #include "tracking.h"
-#include "g2oTypes.h"
-//#include "viewer.h"
-#include <eigen3/Eigen/Dense>
-#include <opencv2/core/eigen.hpp>
+
 
 namespace primerSlam {
-//    int Tracking::estimateCurrentPose() {
-//
-//        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-//        cout << "Starting G2O optimize T: " << endl;
-//
-//        typedef g2o::BlockSolver_6_3 BlockSolverType;
-//        typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
-//                LinearSolverType;
-//        auto solver = new g2o::OptimizationAlgorithmLevenberg(
-//                g2o::make_unique<BlockSolverType>(
-//                        g2o::make_unique<LinearSolverType>()));
-//        g2o::SparseOptimizer optimizer;
-//        optimizer.setAlgorithm(solver);
-//        optimizer.setVerbose(true);
-//
-//        // 设置边 只有一条
-//        auto *vertex_pose = new VertexPose();
-//        vertex_pose->setId(0);
-//        vertex_pose->setEstimate(current_frame_->pose());
-//        optimizer.addVertex(vertex_pose);
-//
-//        // 设置顶点 都添加到这条边上
-//        Mat33 camera_K = left_camera_->K();
-//
-//        int index = 1;
-//        vector<EdgeProjectionPose *> edges;
-//        vector<Feature::Ptr> features;
-//
-//        for (const auto &feature:current_frame_->left_features_) {
-//            auto mp = feature->map_point_.lock();
-//            if (mp != nullptr) {
-//                features.push_back(feature);
-//                auto *edge = new EdgeProjectionPose(mp->pos_, camera_K);
-//                edge->setId(index);
-//                edge->setVertex(0, vertex_pose);
-//                edge->setMeasurement(Vec2d(feature->position_.pt.x,
-//                                           feature->position_.pt.y));
-////                std::cout << "p3d" << std::endl << mp->pos_ << std::endl << std::endl;
-////                std::cout << "p2d" << std::endl << feature->position_.pt << std::endl << std::endl;
-//                edge->setInformation(Eigen::Matrix2d::Identity());
-//                edge->setRobustKernel(new g2o::RobustKernelHuber);
-//                edges.push_back(edge);
-//                optimizer.addEdge(edge);
-//                ++index;
-//            }
-//        }
-//
-//
-//        optimizer.setVerbose(true);
-//        const double chi2_th = 2.5;
-//        int cnt_outlier = 0;
-//        for (int iteration = 0; iteration < 4; ++iteration) {
-//            vertex_pose->setEstimate(current_frame_->pose());
-//            optimizer.initializeOptimization();
-//            optimizer.optimize(3);
-//            cnt_outlier = 0;
-//
-//            // count the outliers
-//            for (size_t i = 0; i < edges.size(); ++i) {
-//                auto e = edges[i];
-//                if (features[i]->is_outlier_) {
-//                    e->computeError();
-//                }
-//                if (e->chi2() > chi2_th) {
-//                    features[i]->is_outlier_ = true;
-//                    e->setLevel(1);
-//                    cnt_outlier++;
-//                } else {
-//                    features[i]->is_outlier_ = false;
-//                    e->setLevel(0);
-//                };
-//
-//                if (iteration == 2) {
-//                    e->setRobustKernel(nullptr);
-//                }
-//            }
-//        }
-//
-//        current_frame_->setPose(vertex_pose->estimate());
-//
-//        cout << " G2O Method Current Pose = \n" << current_frame_->pose().matrix() << endl;
-//        int count = 0;
-//
-//        for (auto &feat : features) {
-//            if (feat->is_outlier_) {
-//                feat->map_point_.reset();
-//                feat->is_outlier_ = false;  // maybe we can still use it in future
-//            } else {
-//                count++;
-//            }
-//        }
-//        cout << "g2o inliers : " << count << endl;
-//        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-//        return 0;
-//    }
+    int Tracking::estimateCurrentPose() {
+
+        LOG(INFO) << "Starting G2O optimize T: " << endl;
+
+        typedef g2o::BlockSolver_6_3 BlockSolverType;
+        typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
+                LinearSolverType;
+        auto solver = new g2o::OptimizationAlgorithmLevenberg(
+                g2o::make_unique<BlockSolverType>(
+                        g2o::make_unique<LinearSolverType>()));
+        g2o::SparseOptimizer optimizer;
+        optimizer.setAlgorithm(solver);
+        optimizer.setVerbose(true);
+
+        // 设置边 只有一条
+        auto *vertex_pose = new VertexPose();
+        vertex_pose->setId(0);
+        vertex_pose->setEstimate(current_frame_->pose());
+        optimizer.addVertex(vertex_pose);
+
+        // 设置顶点 都添加到这条边上
+        Mat33 camera_K = left_camera_->K();
+
+        int index = 1;
+        vector<EdgeProjectionPose *> edges;
+        vector<Feature::Ptr> features;
+
+        for (const auto &feature:current_frame_->left_features_) {
+            auto mp = feature->map_point_.lock();
+            if (mp != nullptr) {
+                features.push_back(feature);
+                auto *edge = new EdgeProjectionPose(mp->pos_, camera_K);
+                edge->setId(index);
+                edge->setVertex(0, vertex_pose);
+                edge->setMeasurement(Vec2d(feature->position_.pt.x,
+                                           feature->position_.pt.y));
+                edge->setInformation(Eigen::Matrix2d::Identity());
+                edge->setRobustKernel(new g2o::RobustKernelHuber);
+                edges.push_back(edge);
+                optimizer.addEdge(edge);
+                ++index;
+            }
+        }
+
+
+        optimizer.setVerbose(true);
+        const double chi2_th = 2.5;
+        int cnt_outlier = 0;
+        for (int iteration = 0; iteration < 4; ++iteration) {
+            vertex_pose->setEstimate(current_frame_->pose());
+            optimizer.initializeOptimization();
+            optimizer.optimize(3);
+            cnt_outlier = 0;
+
+            // count the outliers
+            for (size_t i = 0; i < edges.size(); ++i) {
+                auto e = edges[i];
+                if (features[i]->is_outlier_) {
+                    e->computeError();
+                }
+                if (e->chi2() > chi2_th) {
+                    features[i]->is_outlier_ = true;
+                    e->setLevel(1);
+                    cnt_outlier++;
+                } else {
+                    features[i]->is_outlier_ = false;
+                    e->setLevel(0);
+                };
+
+                if (iteration == 2) {
+                    e->setRobustKernel(nullptr);
+                }
+            }
+        }
+
+        current_frame_->setPose(vertex_pose->estimate());
+
+        LOG(INFO) << " G2O Method Current Pose = \n" << current_frame_->pose().matrix() << endl;
+        int count = 0;
+
+        for (auto &feat : features) {
+            if (feat->is_outlier_) {
+                feat->map_point_.reset();
+                feat->is_outlier_ = false;  // maybe we can still use it in future
+            } else {
+                count++;
+            }
+        }
+        LOG(INFO) << "g2o inliers : " << count << endl;
+        return 0;
+    }
 
     int Tracking::estimateCurrentPosePnp() {
-        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
         vector<cv::Point3f> p3ds;
         vector<cv::Point2f> p2ds;
         Mat33 K = left_camera_->K();
@@ -143,12 +128,11 @@ namespace primerSlam {
         }
 
         cv::solvePnPRansac(p3ds, p2ds, camera_K, Mat(), r_pre,
-                           translation, false, 10000, 2, 0.99, inliers);
+                           translation, false, 10000, 4, 0.99, inliers);
         cv::Mat R;
         cv::Rodrigues(r_pre, R);
-        cout << " PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
-        cout << "ransac inliers : " << inliers.size() << endl;
-        cout << "++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+        LOG(INFO) << "PoseEstimate PNP RANSAC Method Current Pose = \n" << R << endl << translation << endl;
+        LOG(INFO) << "PoseEstimate ransac inliers : " << inliers.size() << endl;
         Mat33 R_e;
         Vec3d t_e;
         cv::cv2eigen(R, R_e);
@@ -221,15 +205,18 @@ namespace primerSlam {
         m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
         // 计算野点个数
         int outliner_count = 0;
+        unordered_map<int, int> train_ids;
+
         for (unsigned int i = 0; i < good_matches.size(); i++) {
             if (m_RANSACStatus[i] == 0) // 状态为0表示野点
             {
                 outliner_count++;
-            } else {
+            } else if (train_ids.find(good_matches.at(i).trainIdx) == train_ids.end()) {
                 matches.push_back(good_matches.at(i));
+                train_ids.insert(make_pair(good_matches.at(i).trainIdx, good_matches.at(i).queryIdx));
             }
         }
-        cout << "final match number : " << matches.size() << endl;
+        LOG(INFO) << "RASNAC ORB final match number : " << matches.size() << endl;
         // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
         return true;
     }
@@ -258,7 +245,7 @@ namespace primerSlam {
                 good_matches.push_back(bf_match);
             }
         }
-        cout << "good match number : " << good_matches.size() << endl;
+        LOG(INFO) << "good match number : " << good_matches.size() << endl;
 
         Mat m_Fundamental;
         vector<uchar> m_RANSACStatus;
@@ -279,15 +266,17 @@ namespace primerSlam {
         m_Fundamental = cv::findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC);
         // 计算野点个数
         int outliner_count = 0;
+        unordered_map<int, int> train_ids;
         for (unsigned int i = 0; i < good_matches.size(); i++) {
             if (m_RANSACStatus[i] == 0) // 状态为0表示野点
             {
                 outliner_count++;
-            } else {
+            } else if (train_ids.find(good_matches.at(i).trainIdx) == train_ids.end()) {
                 matches.push_back(good_matches.at(i));
-            }
+                train_ids.insert(make_pair(good_matches.at(i).trainIdx, good_matches.at(i).queryIdx));
+            } else { ; }
         }
-        cout << "final match number : " << matches.size() << endl;
+        LOG(INFO) << "RANSAC ORB final match number : " << matches.size() << endl;
         // cout << "Fundamental Matrix is : " << endl << m_Fundamental << endl;
         return true;
     }

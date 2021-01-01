@@ -76,6 +76,23 @@ namespace primerSlam {
             _error = _measurement - p3d_proj.head<2>();
         }
 
+        virtual void linearizeOplus() override {
+            const VertexPose *v = static_cast<VertexPose *>(_vertices[0]);
+            SE3 T = v->estimate();
+            Vec3d pos_cam = T * _p3d;
+            double fx = _K(0, 0);
+            double fy = _K(1, 1);
+            double X = pos_cam[0];
+            double Y = pos_cam[1];
+            double Z = pos_cam[2];
+            double Zinv = 1.0 / (Z + 1e-18);
+            double Zinv2 = Zinv * Zinv;
+            _jacobianOplusXi << -fx * Zinv, 0, fx * X * Zinv2, fx * X * Y * Zinv2,
+                    -fx - fx * X * X * Zinv2, fx * Y * Zinv, 0, -fy * Zinv,
+                    fy * Y * Zinv2, fy + fy * Y * Y * Zinv2, -fy * X * Y * Zinv2,
+                    -fy * X * Zinv;
+        }
+
         bool read(istream &in) override { return true; }
 
         bool write(ostream &out) const override { return true; }
@@ -102,6 +119,28 @@ namespace primerSlam {
             Vec3d pos_pixel = _K * (_cam_ext * (T * v1->estimate()));
             pos_pixel /= pos_pixel[2];
             _error = _measurement - pos_pixel.head<2>();
+        }
+
+        virtual void linearizeOplus() override {
+            const VertexPose *v0 = static_cast<VertexPose *>(_vertices[0]);
+            const VertexP3d *v1 = static_cast<VertexP3d *>(_vertices[1]);
+            SE3 T = v0->estimate();
+            Vec3d pw = v1->estimate();
+            Vec3d pos_cam = _cam_ext * T * pw;
+            double fx = _K(0, 0);
+            double fy = _K(1, 1);
+            double X = pos_cam[0];
+            double Y = pos_cam[1];
+            double Z = pos_cam[2];
+            double Zinv = 1.0 / (Z + 1e-18);
+            double Zinv2 = Zinv * Zinv;
+            _jacobianOplusXi << -fx * Zinv, 0, fx * X * Zinv2, fx * X * Y * Zinv2,
+                    -fx - fx * X * X * Zinv2, fx * Y * Zinv, 0, -fy * Zinv,
+                    fy * Y * Zinv2, fy + fy * Y * Y * Zinv2, -fy * X * Y * Zinv2,
+                    -fy * X * Zinv;
+
+            _jacobianOplusXj = _jacobianOplusXi.block<2, 3>(0, 0) *
+                               _cam_ext.rotation_matrix() * T.rotation_matrix();
         }
 
         virtual bool read(std::istream & in) override {return true; };

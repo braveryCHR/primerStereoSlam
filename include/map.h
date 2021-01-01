@@ -8,6 +8,7 @@
 #include "totalInclude.h"
 #include "frame.h"
 #include "mappoint.h"
+#include "feature.h"
 
 namespace primerSlam {
     class Map {
@@ -42,7 +43,7 @@ namespace primerSlam {
         KeyFrameType keyframes_;
         KeyFrameType active_keyframes_;
         Frame::Ptr current_frame_ = nullptr;
-        unsigned int number_active_keyframe_ = 7;
+        unsigned int number_active_keyframe_ = 20;
     };
 }
 

@@ -1,9 +1,7 @@
 add_library(primerSlam SHARED
         camera.cc
-        localMapping.cc
         config.cc
         dataLoader.cc
-        feature.cc
         frame.cc
         tracking.cc
         map.cc
@@ -11,6 +9,7 @@ add_library(primerSlam SHARED
         viewer.cc
         visualOdometry.cc
         trackingOptimize.cc
+        trackingDebug.cc
         backend.cpp)
 
 target_link_libraries(primerSlam

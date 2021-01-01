@@ -5,10 +5,11 @@
 #ifndef PRIMERSTEREOSLAM_BACKEND_H
 #define PRIMERSTEREOSLAM_BACKEND_H
 
-#include <utility>
 #include "totalInclude.h"
 #include "frame.h"
 #include "map.h"
+#include "feature.h"
+#include "g2oTypes.h"
 
 namespace primerSlam {
     class Map;
@@ -20,25 +21,22 @@ namespace primerSlam {
 
         Backend();
 
-        void SetCamera(Camera::Ptr left, Camera::Ptr right) {
-            cam_left_ = std::move(left);
-            cam_right_ = std::move(right);
-        }
+        void SetCamera(const Camera::Ptr &left, const Camera::Ptr &right);
 
-        void SetMap(std::shared_ptr<Map> map) {map_ = map; }
+        void SetMap(const Map::Ptr &map);
 
         void UpdateMap();
 
         void Stop();
 
+        std::thread backend_thread_;
     private:
         void BackendLoop();
 
         void Optimize(Map::KeyFrameType &keyframes, Map::LandmarksType &landmarks);
 
         std::shared_ptr<Map> map_;
-        std::thread backend_thread_;
-        ::mutex data_mutex_;
+        std::mutex data_mutex_;
 
         std::condition_variable map_update_;
         std::atomic<bool> backend_running_{};
