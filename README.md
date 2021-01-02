@@ -20,7 +20,7 @@
 
 **开发者**
 
-- [**AlanJiang98**](https://github.com/AlanJiang98)，清华电子本，北大智能硕，研一在读
+- [**AlanJiang98**](https://github.com/AlanJiang98)，清华
 - [**braveryCHR**](https://github.com/braveryCHR)，北京大学智能系本硕，研一在读
 
 **开发技术**：全程使用clion编写C++，使用cmakelist组织工程
